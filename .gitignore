@@ -1,0 +1,7 @@
+.history
+BACKEND/node_modules
+BACKEND/.env
+BACKEND/package-lock.json
+kihingo-frontend/node_modules
+kihingo-frontend/.env
+kihingo-frontend/package-lock.json
