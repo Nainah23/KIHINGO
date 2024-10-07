@@ -50,7 +50,7 @@ To get started with the KIHINGO Church website, follow these simple steps:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/kihingo-church.git
+git clone https://github.com/Nainah23/KIHINGO.git
 cd kihingo-church
 ```
 
