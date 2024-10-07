@@ -11,7 +11,7 @@ module.exports = {
   MPESA_SHORTCODE: process.env.MPESA_SHORTCODE,
   SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
   FCM_PROJECT_ID: process.env.FCM_PROJECT_ID,
-  FCM_PRIVATE_KEY: process.env.FCM_PRIVATE_KEY.replace(/\\n/g, '\n'), // Important to replace escaped newlines
+  FCM_PRIVATE_KEY: process.env.FCM_PRIVATE_KEY,
   FCM_CLIENT_EMAIL: process.env.FCM_CLIENT_EMAIL,
   YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY,
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,

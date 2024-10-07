@@ -23,20 +23,28 @@ const upload = multer({
 });
 
 // Create an event
+// Create an event
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     const { title, description, date, location } = req.body;
-
+    
     let imageUrl = '';
 
+    // Only upload the image if it exists
     if (req.file) {
-      const uploadResult = await cloudinary.uploader.upload_stream(
-        { folder: 'event-images' },
-        (error, result) => {
-          if (error) throw new Error('Image upload failed');
-          imageUrl = result.secure_url;
-        }
-      ).end(req.file.buffer);
+      const uploadResult = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: 'event-images' },
+          (error, result) => {
+            if (error) {
+              reject(new Error('Image upload failed'));
+            } else {
+              resolve(result.secure_url);
+            }
+          }
+        ).end(req.file.buffer);
+      });
+      imageUrl = uploadResult;
     }
 
     const newEvent = new Event({
@@ -55,6 +63,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 // Get all events
 router.get('/', async (req, res) => {

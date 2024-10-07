@@ -1,0 +1,223 @@
+### Variables
+@baseUrl = http://localhost:8000/api
+@email = kamauwainaina29@gmail.com
+@password = yourpassword
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcwNDE1NDVhMzhiZDc5MDc1OTk2MTU1Iiwicm9sZSI6ImFkbWluIn0sImlhdCI6MTcyODMyMDk4NSwiZXhwIjoxNzI4MzI0NTg1fQ.hT4JccpWilJQhKLyuMPGdKKfNYTr0UVaSp1BUWz84zk
+
+### Auth Routes
+
+# Register User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "naiawriters@gmail.com",
+  "password": "{{password}}",
+  "role": "admin"
+}
+
+### Login User
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "naiawriters@gmail.com",
+  "password": "{{password}}"
+}
+
+### Get User
+GET {{baseUrl}}/auth/user
+x-auth-token: {{token}}
+
+### Feed Routes
+
+### Create Feed Post
+POST {{baseUrl}}/feed
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+  "content": "This is a test feed post",
+  "attachments": ["https://example.com/image.jpg"]
+}
+
+### Get All Feed Posts
+GET {{baseUrl}}/feed
+
+### Update Feed Post
+PUT {{baseUrl}}/feed/6704118841b1716fa02319af
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+  "content": "Updated feed post content",
+  "attachments": ["https://example.com/updated-image.jpg"]
+}
+
+### Delete Feed Post
+DELETE {{baseUrl}}/feed/6704118841b1716fa02319af
+x-auth-token: {{token}}
+
+### Testimonial Routes
+
+### Create Testimonial
+POST {{baseUrl}}/testimonials
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+  "content": "This is a test testimonial"
+}
+
+### Get All Testimonials
+GET {{baseUrl}}/testimonials
+
+### Add Reaction to Testimonial
+POST {{baseUrl}}/testimonials/670413a9a38bd79075996141/react
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+  "type": "like"
+}
+
+### Add Comment to Testimonial
+POST {{baseUrl}}/testimonials/670413a9a38bd79075996141/comment
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+  "content": "This is a test comment"
+}
+
+### Appointment Routes
+
+### Book Appointment
+POST {{baseUrl}}/appointments
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+  "appointmentWith": "reverend",
+  "reason": "Spiritual guidance",
+  "date": "2024-12-01T10:00:00Z"
+}
+
+### Get User Appointments
+GET {{baseUrl}}/appointments
+x-auth-token: {{token}}
+
+### Update Appointment Status (Admin/Reverend/Evangelist only)
+PUT {{baseUrl}}/appointments/67041426a38bd7907599614c
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+  "status": "approved"
+}
+
+### Delete Appointment
+DELETE {{baseUrl}}/appointments/67041426a38bd7907599614c
+x-auth-token: {{token}}
+
+### Donation Routes
+
+### Initiate MPESA STK Push
+POST {{baseUrl}}/donations/initiate
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+  "amount": 1000,
+  "phoneNumber": "254700000000"
+}
+
+### Get User Donations
+GET {{baseUrl}}/donations
+x-auth-token: {{token}}
+
+### Event Routes
+
+### Create Event
+POST {{baseUrl}}/events
+Content-Type: multipart/form-data
+x-auth-token: {{token}}
+
+{
+  "title": "Sunday Service",
+  "description": "Weekly Sunday service",
+  "date": "2024-12-01T09:00:00Z",
+  "location": "Main Church",
+  //"image": "@/path/to/image.jpg"
+}
+
+### Get All Events
+GET {{baseUrl}}/events
+
+### Get Single Event
+GET {{baseUrl}}/events/event_id_here
+
+### Update Event
+PUT {{baseUrl}}/events/event_id_here
+Content-Type: multipart/form-data
+x-auth-token: {{token}}
+
+{
+  "title": "Updated Sunday Service",
+  "description": "Updated weekly Sunday service",
+  "date": "2024-12-08T09:00:00Z",
+  "location": "Main Church",
+  "image": "@/path/to/updated-image.jpg"
+}
+
+### Delete Event
+DELETE {{baseUrl}}/events/event_id_here
+x-auth-token: {{token}}
+
+### Livestream Routes
+
+### Create Livestream
+POST {{baseUrl}}/livestream
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+  "title": "Sunday Service Livestream",
+  "description": "Live broadcast of our Sunday service",
+  "startTime": "2024-12-01T09:00:00Z",
+  "endTime": "2024-12-01T11:00:00Z"
+}
+
+### Get All Livestreams
+GET {{baseUrl}}/livestream
+
+### Update Livestream
+PUT {{baseUrl}}/livestream/livestream_id_here
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+  "title": "Updated Sunday Service Livestream",
+  "description": "Updated live broadcast of our Sunday service",
+  "startTime": "2024-12-08T09:00:00Z",
+  "endTime": "2024-12-08T11:00:00Z"
+}
+
+### Delete Livestream
+DELETE {{baseUrl}}/livestream/livestream_id_here
+x-auth-token: {{token}}
+
+### Notification Routes
+
+### Get User Notifications
+GET {{baseUrl}}/notifications
+x-auth-token: {{token}}
+
+### Mark Notification as Read
+PUT {{baseUrl}}/notifications/notification_id_here/read
+x-auth-token: {{token}}
+
+### Delete Notification
+DELETE {{baseUrl}}/notifications/notification_id_here
+x-auth-token: {{token}}

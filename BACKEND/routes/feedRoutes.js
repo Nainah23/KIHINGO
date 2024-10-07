@@ -70,7 +70,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (feed.user.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({ msg: 'User not authorized' });
     }
-    await feed.remove();
+    await feed.deleteOne();
     res.json({ msg: 'Feed post removed' });
   } catch (err) {
     console.error(err.message);

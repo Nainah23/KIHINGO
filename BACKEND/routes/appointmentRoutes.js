@@ -73,7 +73,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ msg: 'Not authorized to delete this appointment' });
     }
 
-    await appointment.remove();
+    await appointment.deleteOne();
     res.json({ msg: 'Appointment removed' });
   } catch (err) {
     console.error(err.message);
