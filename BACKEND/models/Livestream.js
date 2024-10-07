@@ -1,7 +1,6 @@
-// BACKEND/models/Event.js
 const mongoose = require('mongoose');
 
-const EventSchema = new mongoose.Schema({
+const LivestreamSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true
@@ -10,16 +9,20 @@ const EventSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  date: {
+  streamUrl: {
+    type: String,
+    required: true, // URL to the YouTube livestream
+  },
+  youtubeBroadcastId: {
+    type: String, // Store YouTube livestream ID (useful for fetching or updating streams)
+  },
+  startTime: {
     type: Date,
     required: true
   },
-  location: {
-    type: String,
+  endTime: {
+    type: Date,
     required: true
-  },
-  imageUrl: {
-    type: String
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -32,4 +35,4 @@ const EventSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('Event', EventSchema);
+module.exports = mongoose.model('Livestream', LivestreamSchema);

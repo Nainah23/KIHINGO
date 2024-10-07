@@ -1,21 +1,20 @@
+// BACKEND/routes/eventRoutes.js;
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const AWS = require('aws-sdk');
+const cloudinary = require('cloudinary').v2;  // Cloudinary SDK
 const Event = require('../models/Event');
 const authMiddleware = require('../middleware/authMiddleware');
 const config = require('../config/config');
 
-// Configure AWS
-AWS.config.update({
-  accessKeyId: config.AWS_ACCESS_KEY_ID,
-  secretAccessKey: config.AWS_SECRET_ACCESS_KEY,
-  region: config.AWS_REGION
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: config.CLOUDINARY_CLOUD_NAME,
+  api_key: config.CLOUDINARY_API_KEY,
+  api_secret: config.CLOUDINARY_API_SECRET
 });
 
-const s3 = new AWS.S3();
-
-// Configure multer for file upload
+// Configure multer for file upload (memory storage)
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -31,16 +30,13 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     let imageUrl = '';
 
     if (req.file) {
-      const params = {
-        Bucket: config.AWS_S3_BUCKET,
-        Key: `event-images/${Date.now()}-${req.file.originalname}`,
-        Body: req.file.buffer,
-        ContentType: req.file.mimetype,
-        ACL: 'public-read'
-      };
-
-      const s3UploadResponse = await s3.upload(params).promise();
-      imageUrl = s3UploadResponse.Location;
+      const uploadResult = await cloudinary.uploader.upload_stream(
+        { folder: 'event-images' },
+        (error, result) => {
+          if (error) throw new Error('Image upload failed');
+          imageUrl = result.secure_url;
+        }
+      ).end(req.file.buffer);
     }
 
     const newEvent = new Event({
@@ -103,16 +99,13 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
     let imageUrl = event.imageUrl;
 
     if (req.file) {
-      const params = {
-        Bucket: config.AWS_S3_BUCKET,
-        Key: `event-images/${Date.now()}-${req.file.originalname}`,
-        Body: req.file.buffer,
-        ContentType: req.file.mimetype,
-        ACL: 'public-read'
-      };
-
-      const s3UploadResponse = await s3.upload(params).promise();
-      imageUrl = s3UploadResponse.Location;
+      const uploadResult = await cloudinary.uploader.upload_stream(
+        { folder: 'event-images' },
+        (error, result) => {
+          if (error) throw new Error('Image upload failed');
+          imageUrl = result.secure_url;
+        }
+      ).end(req.file.buffer);
     }
 
     event = await Event.findByIdAndUpdate(

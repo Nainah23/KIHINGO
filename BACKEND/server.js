@@ -1,3 +1,4 @@
+// BACKEND/server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -18,11 +19,8 @@ app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect(config.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('Connected to MongoDB'))
+mongoose.connect(config.MONGODB_URI)
+.then(() => console.log('Umegongewa MongoDB'))
 .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
