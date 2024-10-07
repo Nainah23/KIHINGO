@@ -1,5 +1,5 @@
-```markdown
-# KIHINGO Church Website 🌍⛪
+# KIHINGO Church Website
+```markdown🌍⛪
 
 Welcome to the KIHINGO Church website! Our online platform is designed to connect our community, share our mission, and provide resources for spiritual growth and engagement. 
 
