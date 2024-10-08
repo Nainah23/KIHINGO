@@ -1,12 +1,7 @@
-Creating an attractive and appealing `README.md` for your KIHINGO church website involves a combination of clear structure, engaging content, and visually appealing elements. Below is a suggested template that you can customize to fit your project’s specific details. 
-
-### README.md Template for KIHINGO Church Website
-
 ```markdown
 # KIHINGO Church Website 🌍⛪
 
 Welcome to the KIHINGO Church website! Our online platform is designed to connect our community, share our mission, and provide resources for spiritual growth and engagement. 
-
 
 ---
 
