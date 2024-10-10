@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-```markdown
+
 # KIHINGO Church Website 🌍⛪
-=======
-# KIHINGO Church Website
-```markdown🌍⛪
->>>>>>> 80752e8594bfd26d25b7eff8ecf1cd81464ed261
 
 Welcome to the KIHINGO Church website! Our online platform is designed to connect our community, share our mission, and provide resources for spiritual growth and engagement. 
 
