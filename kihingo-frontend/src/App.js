@@ -14,6 +14,7 @@ import Events from './pages/Events';
 import Livestream from './pages/Livestream';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ChurchGroups from './pages/Groups';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
           <Route path="/livestream" element={<Livestream />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/church_groups" element={<ChurchGroups />} />
         </Routes>
         <Footer />
       </Router>

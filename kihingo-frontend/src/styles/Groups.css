@@ -1,0 +1,197 @@
+/* General Page Styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to bottom right, #f9f6f1, #e0ece4);
+    color: #333;
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.5s ease;
+}
+
+/* Container for Groups */
+.groups-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #fff9e5; /* Warm background for content */
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 1s ease;
+}
+
+/* Button to go back */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.7rem 1.5rem;
+    background-color: #4a90e2;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.back-button:hover {
+    background-color: #357abd;
+    transform: scale(1.05); /* Hover effect to scale the button */
+}
+
+/* Title Styling */
+h1 {
+    text-align: center;
+    color: #d35400; /* A warm orange for heading */
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    font-family: 'Georgia', serif;
+    letter-spacing: 2px;
+    animation: fadeIn 1.5s ease;
+}
+
+/* Navigation Buttons */
+.groups-nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.group-nav-button {
+    padding: 0.7rem 1.5rem;
+    background-color: #f7d794; /* Light warm yellow */
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.group-nav-button:hover {
+    background-color: #f0932b; /* Brighter shade on hover */
+    transform: translateY(-5px); /* Lift on hover */
+}
+
+.group-nav-button.active {
+    background-color: #f0932b;
+    color: white;
+    transform: scale(1.05); /* Slightly larger for active */
+}
+
+/* Content Area */
+.group-content {
+    background-color: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    margin-bottom: 2rem;
+    animation: slideIn 1s ease;
+}
+
+.group-content h2 {
+    color: #e67e22;
+    margin-bottom: 1rem;
+    font-size: 2rem;
+    font-family: 'Georgia', serif;
+}
+
+.group-content p {
+    line-height: 1.8;
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+/* Image Slider */
+.image-slider {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    margin-bottom: 2rem;
+}
+
+.image-slider img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    max-height: 400px;
+    transition: transform 0.5s ease;
+}
+
+.image-slider:hover img {
+    transform: scale(1.05); /* Slight zoom on hover */
+}
+
+/* Slider Navigation Buttons */
+.slider-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.slider-button:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+    transform: scale(1.1); /* Grow the button on hover */
+}
+
+.slider-button.prev {
+    left: 1rem;
+}
+
+.slider-button.next {
+    right: 1rem;
+}
+
+/* Scroll to Top Button */
+.scroll-top-button {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.scroll-top-button:hover {
+    background-color: #357abd;
+    transform: scale(1.1); /* Button grows on hover */
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

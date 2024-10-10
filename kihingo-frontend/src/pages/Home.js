@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
-import { FaHome, FaVideo, FaNewspaper, FaCalendar, FaBookOpen, FaDonate, FaComments } from 'react-icons/fa';
+import { FaHome, FaVideo, FaNewspaper, FaChevronLeft, FaChevronRight, FaCalendar, FaBookOpen, FaDonate, FaComments } from 'react-icons/fa';
 import '../styles/Home.css';
 
 const Home = () => {
@@ -12,6 +12,22 @@ const Home = () => {
   const [displaySubtitle, setDisplaySubtitle] = useState('');
   const headingIndexRef = useRef(0);
   const subtitleIndexRef = useRef(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slides = [
+    { title: "Our Church Groups", description: "Discover the diverse communities within our church", image: "/CHURCH.jpg" },
+    { title: "Youth Group", description: "Empowering the next generation of faithful leaders", image: "/YOUTH.jpg" },
+    { title: "ACK KAMA", description: "Kenya Anglican Men Association - Building strong Christian men", image: "/KAMA.jpg" },
+    { title: "Sunday School", description: "Nurturing faith in our youngest members", image: "/KIDS.jpg" },
+    { title: "Mother's Union", description: "Uniting women in prayer, worship, and service", image: "/mothers-union.jpg" },
+  ];
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
 
 
   const navItems = [
@@ -169,12 +185,34 @@ const Home = () => {
         </section>
 
         <section className="join-story-section">
-          <div className="our-youth-card">
-            <div className="our-youth-content">
-              <h2>OUR YOUTH</h2>
-              <p>Our youth are the heart of our community! They inspire us with their energy, creativity, and dedication. Join us in supporting their initiatives and celebrating their achievements.</p>
-              <Link to="/youth" className="learn-more">Get Involved</Link>
+          <div className="church-groups-section">
+            <h2>Our Church Groups</h2>
+            <div className="church-groups-slider">
+              <button className="slider-button prev" onClick={prevSlide}>
+                <FaChevronLeft />
+              </button>
+              <div
+                className="slide"
+                style={{
+                  backgroundImage: `url(${slides[currentSlide].image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  height: "100%",
+                  width: "100%",
+                }}
+              >
+                <div className="slide-content">
+                  <h3>{slides[currentSlide].title}</h3>
+                  <p>{slides[currentSlide].description}</p>
+                </div>
+              </div>
+              <button className="slider-button next" onClick={nextSlide}>
+                <FaChevronRight />
+              </button>
             </div>
+            <Link to="/church_groups" className="learn-more">
+              Learn More About Our Groups
+            </Link>
           </div>
           <div className="our-story-card">
             <h2>Our Story</h2>
