@@ -1,0 +1,21 @@
+/* src/styles/Livestream.css */
+@import './common.css';
+
+.livestream-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.livestream {
+    width: 100%;
+    max-width: 600px;
+    margin: 20px 0;
+}
+
+@media (max-width: 768px) {
+    .livestream iframe {
+        width: 100%; /* Make iframe responsive */
+        height: auto; /* Maintain aspect ratio */
+    }
+}

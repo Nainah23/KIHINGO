@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.js
+// src/contexts/AuthContext.js;
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -11,11 +11,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      axios.get('/api/auth/user', {
+      axios.get('http://localhost:8000/api/auth/user', {
         headers: { 'x-auth-token': token }
       })
         .then(res => {
-          setUser(res.data);
+          setUser(res.data); // Set user data from response
           setLoading(false);
         })
         .catch(err => {
@@ -27,21 +27,14 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      const res = await axios.post('/api/auth/login', { email, password });
-      localStorage.setItem('token', res.data.token);
-      setUser(res.data.user);
-      return res.data;
-    } catch (err) {
-      console.error(err);
-      throw err;
-    }
+  const login = (userData, token) => {
+    localStorage.setItem('token', token); // Store the token
+    setUser(userData); // Set the user data
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+    localStorage.removeItem('token'); // Remove the token
+    setUser(null); // Clear user data
   };
 
   return (

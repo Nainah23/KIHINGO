@@ -1,3 +1,4 @@
+// src/App.js;
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'; // Update Switch to Routes
 import { AuthProvider } from './contexts/AuthContext';
@@ -18,15 +19,15 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Header />
+       
         <Routes> {/* Use Routes instead of Switch */}
           <Route path="/" element={<Home />} />
-          <Route path="/feed" element={<PrivateRoute component={Feed} />} />
-          <Route path="/testimonials" element={<PrivateRoute component={Testimonials} />} />
+          <Route path="/feed" element={<Feed />} />
+          <Route path="/testimonials" element={<Testimonials />} />
           <Route path="/appointments" element={<PrivateRoute component={Appointments} />} />
-          <Route path="/donations" element={<PrivateRoute component={Donations} />} />
-          <Route path="/events" element={<PrivateRoute component={Events} />} />
-          <Route path="/livestream" element={<PrivateRoute component={Livestream} />} />
+          <Route path="/donations" element={<Donations />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/livestream" element={<Livestream />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Routes>

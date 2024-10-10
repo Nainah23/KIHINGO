@@ -1,0 +1,373 @@
+.home-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: Arial, sans-serif;
+  }
+  
+  .header {
+    width: 100%;
+    background: #333; /* Dark purple background */
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 20px;
+    align-items: center;
+  }
+  
+  .greeting {
+    font-size: 1.5em;
+    color: #80900d;
+  }
+  
+  .user-menu {
+    display: flex;
+    align-items: center;
+    background-color: #333;
+  }
+  
+  .user-button {
+    width: 40px;
+    height: 40px;
+    background-color: #4a90e2;
+    color: rgb(32, 31, 31);
+    border: none;
+    border-radius: 50%;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .user-button:hover {
+    background-color: #357abd;
+  }
+  
+  .dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    width: 200px;
+  }
+  
+  .dropdown-button {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  .dropdown-button:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .dropdown-button .icon {
+    margin-right: 0.5rem;
+  }
+  
+  .auth-buttons {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .login-button, .signup-button {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  .login-button {
+    color: #4a90e2;
+    border: 1px solid #4a90e2;
+  }
+  
+  .login-button:hover {
+    background-color: #4a90e2;
+    color: white;
+  }
+  
+  .signup-button {
+    background-color: #4a90e2;
+    color: white;
+  }
+  
+  .signup-button:hover {
+    background-color: #357abd;
+  }
+  
+  .main-content {
+    padding: 2rem;
+  }
+  
+  .hero-section {
+    text-align: center;
+    padding: 4rem 0;
+  }
+  
+  .animated-heading {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: 'Georgia', serif;
+  }
+  
+  .subtitle {
+    font-size: 1.5rem;
+    color: #666;
+    margin-bottom: 2rem;
+  }
+  
+  .cta-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
+  
+  .cta-button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  
+  .cta-button.primary {
+    background-color: #4a90e2;
+    color: white;
+  }
+  
+  .cta-button.secondary {
+    background-color: #ffd700;
+    color: #333;
+  }
+  
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 4rem;
+  }
+  
+  .info-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+  }
+  
+  .info-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .info-card h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  
+  .info-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+  
+  .info-card p {
+    color: #666;
+    margin-bottom: 1rem;
+  }
+  
+  .learn-more {
+    color: #4a90e2;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  
+  .learn-more:hover {
+    text-decoration: underline;
+  }
+  
+  .join-story-section {
+    display: flex;
+    gap: 2rem;
+    margin-top: 4rem;
+    justify-content: space-evenly;
+  }
+  
+  .our-youth-card, .our-story-card {
+    flex: 1;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  
+  .our-youth-card {
+    background-color: #4a90e2;
+    color: white;
+    text-align: center;
+    max-width: 50%; /* Ensure it does not take more than half the space */
+    border-radius: 50%; /* Make it circular */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+  }
+  
+  .our-story-card {
+    background-color: white;
+    color: #333;
+    flex: 1;
+    text-align: center;
+  }
+
+  .learn-more {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: white;
+    color: #4a90e2;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  
+  .learn-more:hover {
+    background-color: #357abd;
+    color: white;
+  }
+
+  .contact-button {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: white;
+    color: #4a90e2;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  
+  .donation-section {
+    margin-top: 4rem;
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  
+  .donation-projects {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .donation-card {
+    background-color: #f0f0f0;
+    padding: 1rem;
+    border-radius: 4px;
+  }
+  
+  .donate-button {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #4a90e2;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .donate-button:hover {
+    background-color: #357abd;
+  }
+  
+  .live-broadcast-section {
+    margin-top: 4rem;
+  }
+  
+  .broadcast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  
+  .broadcast-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  
+  .watch-live {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #4a90e2;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  
+  .watch-live:hover {
+    background-color: #357abd;
+  }
+
+  nav-bar {
+    width: 100%;
+    background-color: #555; /* Dark green background */
+    padding: 10px 20px; /* Add some padding for aesthetics */
+  }
+  
+  .nav-bar ul {
+    display: flex; /* Use flexbox to arrange items in a row */
+    justify-content: space-around; /* Space items evenly */
+    list-style-type: none; /* Remove bullet points */
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+  }
+  
+  .nav-bar li {
+    margin: 0 15px; /* Add some horizontal space between items */
+  }
+  
+  .nav-link {
+    color: rgb(163, 69, 37); /* Set the link color */
+    text-decoration: none; /* Remove underline */
+    font-size: 1em; /* Set font size */
+    transition: color 0.3s ease; /* Smooth color transition */
+  }
+  
+  .nav-link:hover {
+    color: #23b16c; /* Change color on hover for better visibility */
+  }
+  
+  .nav-icon {
+    margin-right: 5px; /* Space between icon and text */
+  }

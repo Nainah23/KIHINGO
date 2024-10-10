@@ -1,6 +1,7 @@
 // src/pages/Feed.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import "../styles/Feed.css";
 
 const Feed = () => {
   const [feeds, setFeeds] = useState([]);
@@ -8,7 +9,7 @@ const Feed = () => {
   useEffect(() => {
     const fetchFeeds = async () => {
       try {
-        const res = await axios.get('/api/feed');
+        const res = await axios.get('http://localhost:8000/api/feed');
         setFeeds(res.data);
       } catch (err) {
         console.error(err);

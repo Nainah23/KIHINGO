@@ -1,13 +1,14 @@
 // src/pages/Register.js
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // Use useNavigate instead of useHistory
+import { useNavigate } from 'react-router-dom'; 
+import "../styles/Register.css";
 
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState('user');
   const navigate = useNavigate(); // Use useNavigate instead of useHistory
 
   const handleSubmit = async (e) => {
@@ -51,7 +52,7 @@ const Register = () => {
             onChange={(e) => setRole(e.target.value)}
             placeholder="Role"
             required
-        />
+            />
         <button type="submit">Register</button>
       </form>
     </div>

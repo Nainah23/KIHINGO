@@ -1,6 +1,8 @@
 // src/pages/Appointments.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import "../styles/Appointments.css";
+import "../styles/common.css";
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -8,7 +10,7 @@ const Appointments = () => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const res = await axios.get('/api/appointments');
+        const res = await axios.get('http://localhost:8000/api/appointments');
         setAppointments(res.data);
       } catch (err) {
         console.error(err);

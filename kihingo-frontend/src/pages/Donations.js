@@ -1,6 +1,6 @@
-// src/pages/Donations.js
 import React, { useState } from 'react';
 import axios from 'axios';
+import "../styles/Donations.css"; // Import Donations.css
 
 const Donations = () => {
   const [amount, setAmount] = useState('');
@@ -9,7 +9,7 @@ const Donations = () => {
   const handleDonation = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/api/donations/initiate', { amount, phoneNumber });
+      const res = await axios.post('http://localhost:8000/api/donations/initiate', { amount, phoneNumber });
       // Handle the response from MPESA STK Push
       console.log(res.data);
     } catch (err) {
@@ -20,7 +20,7 @@ const Donations = () => {
   return (
     <div>
       <h2>Make a Donation</h2>
-      <form onSubmit={handleDonation}>
+      <form className="donation-form" onSubmit={handleDonation}>
         <input
           type="number"
           value={amount}

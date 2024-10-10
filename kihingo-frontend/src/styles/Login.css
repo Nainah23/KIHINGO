@@ -1,0 +1,23 @@
+/* src/styles/Login.css */
+@import './common.css';
+
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+form {
+    width: 100%;
+    max-width: 400px;
+}
+
+label {
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .login-container {
+        padding: 10px;
+    }
+}

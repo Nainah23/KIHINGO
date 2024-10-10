@@ -1,6 +1,7 @@
 // src/pages/Testimonials.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import "../styles/Testimonials.css";
 
 const Testimonials = () => {
   const [testimonials, setTestimonials] = useState([]);
@@ -8,7 +9,7 @@ const Testimonials = () => {
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
-        const res = await axios.get('/api/testimonials');
+        const res = await axios.get('http://localhost:8000/api/testimonials');
         setTestimonials(res.data);
       } catch (err) {
         console.error(err);

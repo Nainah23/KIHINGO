@@ -1,0 +1,25 @@
+/* src/styles/Events.css */
+@import './common.css';
+
+.events-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.event {
+    width: 90%;
+    max-width: 600px;
+    margin: 15px 0;
+}
+
+.event img {
+    width: 100%; /* Responsive image */
+    border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+    .event {
+        font-size: 0.9em;
+    }
+}

@@ -56,16 +56,19 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Check if user exists
     let user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ msg: 'Invalid Credentials' });
     }
 
+    // Compare provided password with stored hashed password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ msg: 'Invalid Credentials' });
     }
 
+    // Prepare payload for JWT
     const payload = {
       user: {
         id: user.id,
@@ -73,13 +76,24 @@ router.post('/login', async (req, res) => {
       }
     };
 
+    // Sign the token and return user data + token
     jwt.sign(
       payload,
       config.JWT_SECRET,
-      { expiresIn: 3600 },
+      { expiresIn: 3600 }, // Token expires in 1 hour
       (err, token) => {
         if (err) throw err;
-        res.json({ token });
+
+        // Send response with token and user data
+        res.json({
+          token,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+          }
+        });
       }
     );
   } catch (err) {
@@ -87,6 +101,7 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+
 
 // Get User
 router.get('/user', authMiddleware, async (req, res) => {

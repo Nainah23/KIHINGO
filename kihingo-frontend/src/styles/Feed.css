@@ -1,0 +1,24 @@
+/* src/styles/Feed.css */
+@import './common.css';
+
+.feed-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.feed-item {
+    width: 90%;
+    max-width: 600px;
+    margin: 10px 0;
+}
+
+.feed-item p {
+    color: #444;
+}
+
+@media (max-width: 768px) {
+    .feed-item p {
+        font-size: 0.9em;
+    }
+}

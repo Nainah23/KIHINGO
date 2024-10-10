@@ -1,6 +1,7 @@
 // src/pages/Events.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import "../styles/Events.css";
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -8,7 +9,7 @@ const Events = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await axios.get('/api/events');
+        const res = await axios.get('http://localhost:8000/api/events');
         setEvents(res.data);
       } catch (err) {
         console.error(err);

@@ -1,6 +1,7 @@
 // src/pages/Livestream.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import "../styles/Livestream.css";
 
 const Livestream = () => {
   const [livestreams, setLivestreams] = useState([]);
@@ -8,7 +9,7 @@ const Livestream = () => {
   useEffect(() => {
     const fetchLivestreams = async () => {
       try {
-        const res = await axios.get('/api/livestream');
+        const res = await axios.get('http://localhost:8000/api/livestream');
         setLivestreams(res.data);
       } catch (err) {
         console.error(err);

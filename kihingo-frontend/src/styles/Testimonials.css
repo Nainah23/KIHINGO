@@ -1,0 +1,28 @@
+/* src/styles/Testimonials.css */
+@import './common.css';
+
+.testimonials-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.testimonial {
+    width: 90%;
+    max-width: 600px;
+}
+
+.testimonial p {
+    font-size: 1.1em;
+    color: #555; /* Subtle gray for testimonial content */
+}
+
+.testimonial p:first-of-type {
+    font-weight: bold; /* Bold for user name */
+}
+
+@media (max-width: 768px) {
+    .testimonial p {
+        font-size: 1em; /* Adjust font size for mobile */
+    }
+}

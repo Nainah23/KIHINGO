@@ -1,0 +1,30 @@
+/* src/styles/Donations.css */
+
+.donation-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px;
+}
+
+.donation-form input {
+    margin: 10px 0;
+    padding: 10px;
+    width: 80%; /* Responsive input width */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.donation-form button {
+    background-color: #28a745; /* Green button color */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.donation-form button:hover {
+    background-color: #218838; /* Darker green on hover */
+}
