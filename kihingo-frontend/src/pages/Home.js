@@ -9,7 +9,10 @@ const Home = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [displayText, setDisplayText] = useState('');
-  const indexRef = useRef(0);
+  const [displaySubtitle, setDisplaySubtitle] = useState('');
+  const headingIndexRef = useRef(0);
+  const subtitleIndexRef = useRef(0);
+
 
   const navItems = [
     { name: 'Home', icon: FaHome, path: '/' },
@@ -31,20 +34,44 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const text = "Welcome to ACK St. Philip's KIHINGO Church";
-    const textLength = 43;
-
-    const intervalId = setInterval(() => {
-      if (indexRef.current < textLength) {
-        setDisplayText(prev => text.slice(0, indexRef.current + 1));
-        indexRef.current += 1;
+    const heading = "Welcome to ACK St. Philip's KIHINGO Church";
+    const subtitle = "Join us in worship and community";
+    const headingLength = heading.length;
+    const subtitleLength = subtitle.length;
+  
+    // Animate the heading
+    const headingIntervalId = setInterval(() => {
+      if (headingIndexRef.current < headingLength) {
+        setDisplayText(prev => heading.slice(0, headingIndexRef.current + 1));
+        headingIndexRef.current += 1;
       } else {
-        clearInterval(intervalId);
+        clearInterval(headingIntervalId);
       }
     }, 100);
-
-    return () => clearInterval(intervalId);
+  
+    // Calculate delay for subtitle animation
+    const headingAnimationDuration = headingLength * 100; // Total time for heading animation
+  
+    // Start subtitle animation after heading finishes
+    const subtitleTimeoutId = setTimeout(() => {
+      const subtitleIntervalId = setInterval(() => {
+        if (subtitleIndexRef.current < subtitleLength) {
+          setDisplaySubtitle(prev => subtitle.slice(0, subtitleIndexRef.current + 1));
+          subtitleIndexRef.current += 1;
+        } else {
+          clearInterval(subtitleIntervalId);
+        }
+      }, 100);
+    }, headingAnimationDuration);
+  
+    // Cleanup intervals and timeout
+    return () => {
+      clearInterval(headingIntervalId);
+      clearTimeout(subtitleTimeoutId);
+    };
   }, []);
+  
+
 
   const DropdownButton = ({ item }) => {
     const requiresAuth = ['/feed', '/appointments'].includes(item.path);
@@ -112,19 +139,21 @@ const Home = () => {
       </nav>
 
       <main className="main-content">
-        <section className="hero-section">
-          <h1 className="animated-heading">{displayText}</h1>
-          <p className="subtitle">Join us in worship and community</p>
-          <div className="cta-buttons">
-            <Link to="/about" className="cta-button primary">Join Us Today</Link>
-            <Link to="/donations" className="cta-button secondary">Make a Donation</Link>
+      <section className="hero-section">
+          <div className="hero-background">
+            <h1 className="animated-heading">{displayText}</h1>
+            <p className="animated-subtitle">{displaySubtitle}</p>
+            <div className="cta-buttons">
+              <Link to="/about" className="cta-button primary">Join Us Today</Link>
+              <Link to="/donations" className="cta-button secondary">Make a Donation</Link>
+            </div>
           </div>
         </section>
 
         <section className="info-grid">
           <div className="info-card">
             <h2>Our Church</h2>
-            <img src="/path/to/church-image.jpg" alt="Our Church" />
+            <img src="/kihi.jpg" alt="Our Church" />
             <Link to="/about" className="learn-more">Learn More</Link>
           </div>
           <div className="info-card">
@@ -141,9 +170,11 @@ const Home = () => {
 
         <section className="join-story-section">
           <div className="our-youth-card">
-            <h2>OUR YOUTH</h2>
-            <p>Our youth are the heart of our community! They inspire us with their energy, creativity, and dedication. Join us in supporting their initiatives and celebrating their achievements.</p>
-            <Link to="/youth" className="learn-more">Get Involved</Link>
+            <div className="our-youth-content">
+              <h2>OUR YOUTH</h2>
+              <p>Our youth are the heart of our community! They inspire us with their energy, creativity, and dedication. Join us in supporting their initiatives and celebrating their achievements.</p>
+              <Link to="/youth" className="learn-more">Get Involved</Link>
+            </div>
           </div>
           <div className="our-story-card">
             <h2>Our Story</h2>
@@ -159,17 +190,17 @@ const Home = () => {
             <div className="donation-card">
               <h3>Project 1</h3>
               <p>Description of Project 1</p>
-              <button className="donate-button">Donate</button>
+              <Link to="/donations" className="donate-button">Donate</Link>
             </div>
             <div className="donation-card">
               <h3>Project 2</h3>
               <p>Description of Project 2</p>
-              <button className="donate-button">Donate</button>
+              <Link to="/donations" className="donate-button">Donate</Link>
             </div>
             <div className="donation-card">
               <h3>Project 3</h3>
               <p>Description of Project 3</p>
-              <button className="donate-button">Donate</button>
+              <Link to="/donations" className="donate-button">Donate</Link>
             </div>
           </div>
         </section>

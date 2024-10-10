@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { MdEmail } from 'react-icons/md';
 import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
 import '../styles/Footer.css';  // Import the CSS file
 
@@ -24,8 +25,11 @@ const Footer = () => {
         <div className="footer-section">
           <h3>Connect With Us</h3>
           <div className="social-icons">
-            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
+            <a href="https://facebook.com/groups/459814728668097/" target="_blank" rel="noopener noreferrer">
               <FaFacebookF />
+            </a>
+            <a href="mailto:kamauwainaina29@gmail.com" target="_blank" rel="noopener noreferrer">
+              <MdEmail />
             </a>
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
               <FaTwitter />

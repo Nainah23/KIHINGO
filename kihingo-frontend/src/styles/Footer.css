@@ -1,35 +1,41 @@
 /* Footer.css */
 
 .footer {
-  background-color: #333; /* Dark background */
-  color: white;
-  padding: 2rem;
+  background-color: #333333; /* Grey background */
+  color: white; /* White text color for all content */
+  padding: 3rem 1rem;
   font-family: 'Arial', sans-serif;
 }
 
 .footer-content {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap; /* Ensure responsiveness */
+  flex-wrap: wrap;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .footer-section {
   flex: 1;
-  min-width: 250px;
-  margin: 1rem 2rem;
+  min-width: 200px;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
 }
 
 .footer-section h3 {
-  color: #ffd700; /* Gold color for headings */
+  color: rgb(10, 10, 10); /* White color for headings */
   margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.footer-section p {
+  color: rgb(15, 15, 15); /* Ensure paragraph text is white */
 }
 
 .footer-section ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .footer-section ul li {
@@ -37,13 +43,13 @@
 }
 
 .footer-section ul li a {
-  color: white;
+  color: rgb(23, 22, 22); /* White color for links */
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
 .footer-section ul li a:hover {
-  color: #ffd700; /* Gold on hover */
+  color: #ffd700; /* Gold color on hover for contrast */
 }
 
 .social-icons {
@@ -52,24 +58,52 @@
 }
 
 .social-icons a {
-  color: white;
   font-size: 1.5rem;
-  transition: color 0.3s ease;
+  transition: opacity 0.3s ease;
+}
+
+/* Brand colors for social icons */
+.social-icons a[href*="facebook.com"] {
+  color: #1877F2; /* Facebook blue */
+}
+
+.social-icons a[href*="twitter.com"] {
+  color: #1DA1F2; /* Twitter blue */
+}
+
+.social-icons a[href*="instagram.com"] {
+  color: #E4405F; /* Instagram pink/orange */
+}
+.social-icons a[href*="gmail.com"] {
+  color: #D44638; /* Gmail red */
+}
+.social-icons a[href*="youtube.com"] {
+  color: #FF0000; /* YouTube red */
 }
 
 .social-icons a:hover {
-  color: #ffd700; /* Gold on hover */
+  opacity: 0.8; /* Slightly dim the icon on hover */
 }
 
 .footer-bottom {
   text-align: center;
   margin-top: 2rem;
-  border-top: 1px solid #444;
   padding-top: 1rem;
+  border-top: 1px solid #555; /* Slightly lighter border for separation */
 }
 
 .footer-bottom p {
   margin: 0;
   font-size: 0.875rem;
-  color: #bbb;
+  color: rgb(16, 15, 15); /* Ensure copyright text is white */
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+  }
+
+  .footer-section {
+    margin-bottom: 1.5rem;
+  }
 }
