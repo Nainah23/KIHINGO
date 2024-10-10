@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 ```markdown
 # KIHINGO Church Website 🌍⛪
+=======
+# KIHINGO Church Website
+```markdown🌍⛪
+>>>>>>> 80752e8594bfd26d25b7eff8ecf1cd81464ed261
 
 Welcome to the KIHINGO Church website! Our online platform is designed to connect our community, share our mission, and provide resources for spiritual growth and engagement. 
 
@@ -49,7 +54,7 @@ To get started with the KIHINGO Church website, follow these simple steps:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/kihingo-church.git
+git clone https://github.com/Nainah23/KIHINGO.git
 cd kihingo-church
 ```
 
