@@ -1,4 +1,4 @@
-// Backend/routes/livestreamRoutes.js;
+// Backend/routes/livestreamRoutes.js
 const express = require('express');
 const router = express.Router();
 const Livestream = require('../models/Livestream');
@@ -16,11 +16,11 @@ router.post('/', authMiddleware, async (req, res) => {
     const newLivestream = new Livestream({
       title,
       description,
-      streamUrl: `https://www.youtube.com/watch?v=${broadcastId}`, // YouTube livestream URL
+      streamUrl: `https://www.youtube.com/watch?v=${broadcastId}`,
       startTime,
       endTime,
       createdBy: req.user.id,
-      youtubeBroadcastId: broadcastId, // Store YouTube broadcast ID
+      youtubeBroadcastId: broadcastId,
     });
 
     const livestream = await newLivestream.save();
@@ -52,13 +52,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ msg: 'Livestream not found' });
     }
 
-    // Check user authorization
     if (livestream.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({ msg: 'User not authorized' });
     }
-
-    // Optionally, update the YouTube broadcast if needed
-    // This requires implementing an update function in youtubeService.js
 
     livestream.title = title;
     livestream.description = description;
@@ -83,12 +79,10 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ msg: 'Livestream not found' });
     }
 
-    // Check user authorization
     if (livestream.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({ msg: 'User not authorized' });
     }
 
-    // End the YouTube broadcast
     if (livestream.youtubeBroadcastId) {
       await endLiveBroadcast(livestream.youtubeBroadcastId);
     }

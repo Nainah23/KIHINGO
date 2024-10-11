@@ -1,36 +1,48 @@
 const { google } = require('googleapis');
+const path = require('path'); // Import the path module
 const youtube = google.youtube('v3');
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+const CHANNEL_ID = 'UCtdZSnZvxOd-wc0GrV6q3tQ'; // Your specified channel ID
 
-// Function to create a live broadcast
 const createLiveBroadcast = async (title, description, startTime, endTime) => {
   try {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: path.join(__dirname, '../config/service-account-key.json'), // Updated path
+      scopes: ['https://www.googleapis.com/auth/youtube.force-ssl'],
+    });
+
+    const authClient = await auth.getClient();
+    google.options({ auth: authClient });
+
     const broadcastResponse = await youtube.liveBroadcasts.insert({
-      key: YOUTUBE_API_KEY,
-      part: ['snippet', 'status'],
+      part: ['snippet', 'status', 'contentDetails'],
       requestBody: {
         snippet: {
           title,
           description,
           scheduledStartTime: startTime,
           scheduledEndTime: endTime,
+          channelId: CHANNEL_ID,
         },
         status: {
-          privacyStatus: 'public', // or 'unlisted', 'private'
+          privacyStatus: 'public',
+        },
+        contentDetails: {
+          enableAutoStart: true,
+          enableAutoStop: true,
         },
       },
     });
 
     const broadcast = broadcastResponse.data;
 
-    // Create a live stream
     const streamResponse = await youtube.liveStreams.insert({
-      key: YOUTUBE_API_KEY,
       part: ['snippet', 'cdn'],
       requestBody: {
         snippet: {
           title: `${title} Stream`,
+          channelId: CHANNEL_ID,
         },
         cdn: {
           format: '1080p',
@@ -41,18 +53,16 @@ const createLiveBroadcast = async (title, description, startTime, endTime) => {
 
     const stream = streamResponse.data;
 
-    // Bind the live stream to the broadcast
     await youtube.liveBroadcasts.bind({
-      key: YOUTUBE_API_KEY,
-      part: ['id', 'snippet'],
+      part: ['id', 'contentDetails'],
       id: broadcast.id,
       streamId: stream.id,
-      requestBody: {},
     });
 
     return {
       broadcastId: broadcast.id,
-      streamUrl: stream.cdn.ingestionInfo.streamName, // or ingestionInfo.rtmpUrl
+      streamUrl: stream.cdn.ingestionInfo.ingestionAddress,
+      streamKey: stream.cdn.ingestionInfo.streamName,
     };
   } catch (error) {
     console.error('Error creating live broadcast:', error);
@@ -60,15 +70,12 @@ const createLiveBroadcast = async (title, description, startTime, endTime) => {
   }
 };
 
-// Function to end a live broadcast
 const endLiveBroadcast = async (broadcastId) => {
   try {
     await youtube.liveBroadcasts.transition({
-      key: YOUTUBE_API_KEY,
-      part: ['status'],
-      id: broadcastId,
       broadcastStatus: 'complete',
-      notifySubscribers: false,
+      id: broadcastId,
+      part: ['id', 'status'],
     });
   } catch (error) {
     console.error('Error ending live broadcast:', error);

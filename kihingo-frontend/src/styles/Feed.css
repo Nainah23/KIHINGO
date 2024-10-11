@@ -1,24 +1,163 @@
-/* src/styles/Feed.css */
-@import './common.css';
+/* Feed.css */
 
-.feed-container {
+:root {
+    --primary-red: #a1626a;
+    --primary-purple: #cbbad4;
+    --light-purple: #e8e0f0;
+    --dark-red: #8a4e55;
+    --off-white: #f9f7fa;
+    --dark-gray: #333333;
+  }
+  
+  body {
+    background-color: var(--off-white);
+    color: var(--dark-gray);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .feed-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .back-home-button {
+    background-color: rgb(111, 159, 34); /* Updated to the specified color */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  
+  .back-home-button:hover {
+    background-color: var(--primary-red); /* Optional: You can change this if you want a different hover color */
+  }  
+  
+  .bible-verse-container {
+    background-color: var(--light-purple);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+  
+  .bible-verse-scroll {
+    display: inline-block;
+    white-space: nowrap;
+    animation: scroll-left 30s linear infinite;
+    color: var(--primary-red);
+    font-style: italic;
+  }
+  
+  @keyframes scroll-left {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+  
+  h2 {
+    color: var(--primary-red);
+    text-align: center;
+    font-size: 2.5em;
+    margin-bottom: 30px;
+  }
+  
+  .new-post-form {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .new-post-form input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--primary-purple);
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .new-post-form button {
+    background-color: var(--primary-red);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .new-post-form button:hover {
+    background-color: var(--dark-red);
+  }
+  
+  .feed-post {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+  
+  .feed-post:hover {
+    transform: translateY(-5px);
+  }
+  
+  .user-name {
+    color: var(--primary-red);
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  
+  .content {
+    margin-bottom: 15px;
+    line-height: 1.6;
+  }
+  
+  .attachments img {
+    max-width: 100%;
+    border-radius: 5px;
+    margin-bottom: 15px;
+  }
+  
+  .reaction-section {
     display: flex;
-    flex-direction: column;
+    justify-content: flex-start; /* Aligns the buttons to the left */
     align-items: center;
-}
-
-.feed-item {
-    width: 90%;
-    max-width: 600px;
-    margin: 10px 0;
-}
-
-.feed-item p {
-    color: #444;
-}
-
-@media (max-width: 768px) {
-    .feed-item p {
-        font-size: 0.9em;
+    margin-top: 10px;
+    width: 30%; /* Make the reaction section smaller */
+  }
+  
+  .reaction-buttons {
+    display: flex;
+    gap: 5px; /* Reduced gap between like and reply buttons */
+  }
+  
+  .reaction-button, .reply-button {
+    background-color: var(--light-purple);
+    border: none;
+    padding: 4px 8px; /* Reduced padding to make the buttons smaller */
+    border-radius: 15px; /* Reduced the border-radius to match the smaller size */
+    cursor: pointer;
+    font-size: 0.8em; /* Reduced font size */
+    transition: background-color 0.3s ease;
+  }
+  
+  .reaction-button:hover, .reply-button:hover {
+    background-color: var(--primary-purple);
+  }
+  
+  
+  @media (max-width: 600px) {
+    .feed-container {
+      padding: 10px;
     }
-}
+    
+    h2 {
+      font-size: 2em;
+    }
+  }

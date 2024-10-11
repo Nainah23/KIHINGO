@@ -18,7 +18,7 @@
   }
   
   .greeting-section {
-    background-image: url('/kihi.jpg');
+    background-image: url('/public/kihi.jpg');
     background-size: cover;
     background-position: center;
     padding: 40px;
@@ -126,7 +126,7 @@
   }
   
   .hero-background {
-    background-image: url('/kihi.jpg');
+    background-image: url('/public/kihi.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -266,7 +266,7 @@
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    background-image: url('/kihi.jpg');
+    background-image: url('/public/kihi.jpg');
     background-size: cover;
     background-position: center;
     position: relative;

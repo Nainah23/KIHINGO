@@ -14,6 +14,7 @@ import Events from './pages/Events';
 import Livestream from './pages/Livestream';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Comments from './pages/Comments';
 import ChurchGroups from './pages/Groups';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         <Routes> {/* Use Routes instead of Switch */}
           <Route path="/" element={<Home />} />
           <Route path="/feed" element={<Feed />} />
+          <Route path="/comments/:id" component={Comments} />
           <Route path="/testimonials" element={<Testimonials />} />
           <Route path="/appointments" element={<PrivateRoute component={Appointments} />} />
           <Route path="/donations" element={<Donations />} />

@@ -1,3 +1,4 @@
+// BACKEND/models/Livestream.js
 const mongoose = require('mongoose');
 
 const LivestreamSchema = new mongoose.Schema({
@@ -11,10 +12,10 @@ const LivestreamSchema = new mongoose.Schema({
   },
   streamUrl: {
     type: String,
-    required: true, // URL to the YouTube livestream
+    required: true,
   },
   youtubeBroadcastId: {
-    type: String, // Store YouTube livestream ID (useful for fetching or updating streams)
+    type: String,
   },
   startTime: {
     type: Date,

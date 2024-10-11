@@ -37,7 +37,7 @@ const Footer = () => {
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
               <FaInstagram />
             </a>
-            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">
+            <a href="https://www.youtube.com/channel/UCtdZSnZvxOd-wc0GrV6q3tQ" target="_blank" rel="noopener noreferrer">
               <FaYoutube />
             </a>
           </div>
