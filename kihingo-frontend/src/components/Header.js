@@ -1,36 +1,85 @@
-// src/components/Header.js;
-import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
+import { FaHome, FaVideo, FaNewspaper, FaCalendar, FaBookOpen, FaDonate, FaComments } from 'react-icons/fa';
+import '../styles/Header.css';
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const navItems = [
+    { name: 'Home', icon: FaHome, path: '/' },
+    { name: 'Live Stream', icon: FaVideo, path: '/livestream' },
+    { name: 'Feed', icon: FaNewspaper, path: '/feed' },
+    { name: 'Events', icon: FaCalendar, path: '/events' },
+    { name: 'Book an Appointment', icon: FaBookOpen, path: '/appointments' },
+    { name: 'Make a Donation', icon: FaDonate, path: '/donations' },
+    { name: 'Testimonials', icon: FaComments, path: '/testimonials' },
+  ];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const DropdownButton = ({ item }) => {
+    const requiresAuth = ['/feed', '/appointments'].includes(item.path);
+
+    if (requiresAuth && !user) {
+      return (
+        <Link to="/login" state={{ from: item.path }} className="dropdown-button">
+          <item.icon className="icon" />
+          {item.name}
+        </Link>
+      );
+    }
+    return (
+      <Link to={item.path} className="dropdown-button">
+        <item.icon className="icon" />
+        {item.name}
+      </Link>
+    );
+  };
 
   return (
-    <header className="bg-gray-800 text-white p-4">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold">ACK St Philips KIHINGO</Link>
-        <nav>
-          <ul className="flex space-x-4">
-            <li><Link to="/" className="hover:text-gray-300">Home</Link></li>
-            {user ? (
-              <>
-                <li><Link to="/feed" className="hover:text-gray-300">Feed</Link></li>
-                <li><Link to="/testimonials" className="hover:text-gray-300">Testimonials</Link></li>
-                <li><Link to="/appointments" className="hover:text-gray-300">Appointments</Link></li>
-                <li><Link to="/donations" className="hover:text-gray-300">Donations</Link></li>
-                <li><Link to="/events" className="hover:text-gray-300">Events</Link></li>
-                <li><Link to="/livestream" className="hover:text-gray-300">Livestream</Link></li>
-                <li><button onClick={logout} className="hover:text-gray-300">Logout</button></li>
-              </>
-            ) : (
-              <>
-                <li><Link to="/login" className="hover:text-gray-300">Login</Link></li>
-                <li><Link to="/register" className="hover:text-gray-300">Register</Link></li>
-              </>
+    <header className="header">
+      <Link to="/" className="logo-link">
+        <img src="/ACKlogo.jpg" alt="Church Logo" className="church-logo" />
+      </Link>
+      {user && (
+        <div className="user-greeting">
+          Hello, {user.name.split(' ')[0]}
+        </div>
+      )}
+      <div className="user-menu">
+        {user ? (
+          <div className="dropdown">
+            <button onClick={toggleMenu} className="user-button">
+              {user.name ? user.name.substring(0, 2).toUpperCase() : 'UN'}
+            </button>
+            {isMenuOpen && (
+              <div className="dropdown-menu">
+                {navItems.map((item) => (
+                  <DropdownButton key={item.name} item={item} />
+                ))}
+                <button onClick={handleLogout} className="dropdown-button">
+                  Logout
+                </button>
+              </div>
             )}
-          </ul>
-        </nav>
+          </div>
+        ) : (
+          <div className="auth-buttons">
+            <Link to="/login" className="login-button">Login</Link>
+            <Link to="/register" className="signup-button">Sign Up</Link>
+          </div>
+        )}
       </div>
     </header>
   );

@@ -95,7 +95,7 @@
   }
   
   .feed-post {
-    background-color: white;
+    background-color: beige;
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 20px;
@@ -129,23 +129,30 @@
     justify-content: flex-start; /* Aligns the buttons to the left */
     align-items: center;
     margin-top: 10px;
-    width: 30%; /* Make the reaction section smaller */
+    width: 30%; 
+    background-color: beige;
+    border: none;/* Make the reaction section smaller */
   }
   
   .reaction-buttons {
     display: flex;
-    gap: 5px; /* Reduced gap between like and reply buttons */
+    gap: 5px; 
+    background-color: beige;
+    border: none;/* Reduced gap between like and reply buttons */
   }
   
   .reaction-button, .reply-button {
     background-color: var(--light-purple);
-    border: none;
-    padding: 4px 8px; /* Reduced padding to make the buttons smaller */
+    /*padding: 4px 8px; Reduced padding to make the buttons smaller */
     border-radius: 15px; /* Reduced the border-radius to match the smaller size */
     cursor: pointer;
-    font-size: 0.8em; /* Reduced font size */
+    font-size: 1.2em; /* Reduced font size */
     transition: background-color 0.3s ease;
   }
+  
+  .reaction-button {
+    font-size: 1.4em; /* Increased font size */
+    }
   
   .reaction-button:hover, .reply-button:hover {
     background-color: var(--primary-purple);
@@ -160,4 +167,45 @@
     h2 {
       font-size: 2em;
     }
+  }
+
+  .post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .post-actions {
+    position: relative;
+  }
+  
+  .three-dots-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .post-actions-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 5px 0;
+    z-index: 1000;
+  }
+  
+  .post-actions-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 5px 10px;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .post-actions-dropdown button:hover {
+    background-color: #f0f0f0;
   }

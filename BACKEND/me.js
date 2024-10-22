@@ -1,78 +1,142 @@
-// BACKEND/routes/feedRoutes.js;
+// src/pages/Appointments.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import "../styles/Appointments.css";
+import "../styles/common.css";
+
+const Appointments = () => {
+  const [appointments, setAppointments] = useState([]);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const res = await axios.get('http://localhost:8000/api/appointments');
+        setAppointments(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
+  return (
+    <div>
+      <h2>Appointments</h2>
+      {appointments.map(appointment => (
+        <div key={appointment._id}>
+          <p>With: {appointment.appointmentWith}</p>
+          <p>Reason: {appointment.reason}</p>
+          <p>Date: {new Date(appointment.date).toLocaleString()}</p>
+          <p>Status: {appointment.status}</p>
+        </div>
+      ))}
+      {/* Add appointment booking form */}
+    </div>
+  );
+};
+
+export default Appointments;
+
+
+// BACKEND/routes/appointmentRoutes.js
 const express = require('express');
 const router = express.Router();
-const Feed = require('../models/Feed');
+const Appointment = require('../models/Appointment');
+const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
 
-// Create a feed post
+// Book an appointment
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { content, attachments } = req.body;
-    const newFeed = new Feed({
+    const { reason, date } = req.body;
+    
+    // Find the reverend
+    const reverend = await User.findOne({ role: 'reverend' });
+    if (!reverend) {
+      return res.status(404).json({ msg: 'No reverend found in the system' });
+    }
+
+    const newAppointment = new Appointment({
       user: req.user.id,
-      content,
-      attachments
+      appointmentWith: reverend._id,
+      reason,
+      date
     });
-    const feed = await newFeed.save();
-    res.json(feed);
+
+    const appointment = await newAppointment.save();
+    res.json(appointment);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
 
-// Get all feed posts
-router.get('/', async (req, res) => {
+// Get all appointments for a user
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const feeds = await Feed.find().sort({ createdAt: -1 }).populate('user', 'name');
-    res.json(feeds);
+    const appointments = await Appointment.find({ user: req.user.id }).sort({ date: 1 });
+    res.json(appointments);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
 
-// Update a feed post
+// Get all appointments for the reverend
+router.get('/reverend', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'reverend') {
+      return res.status(403).json({ msg: 'Not authorized' });
+    }
+    const appointments = await Appointment.find({ appointmentWith: req.user.id }).sort({ date: 1 });
+    res.json(appointments);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Update appointment status (for reverend only)
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { content, attachments } = req.body;
-    const feed = await Feed.findById(req.params.id);
+    const { status } = req.body;
+    const appointment = await Appointment.findById(req.params.id);
 
-    if (!feed) {
-      return res.status(404).json({ msg: 'Feed post not found' });
+    if (!appointment) {
+      return res.status(404).json({ msg: 'Appointment not found' });
     }
 
-    // Check user authorization
-    if (feed.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(401).json({ msg: 'User not authorized' });
+    // Check if user is the reverend
+    if (req.user.role !== 'reverend') {
+      return res.status(403).json({ msg: 'Not authorized to update appointment status' });
     }
 
-    // Update the feed post
-    feed.content = content;
-    feed.attachments = attachments;
+    appointment.status = status;
+    await appointment.save();
 
-    await feed.save();
-
-    res.json(feed);
+    res.json(appointment);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
 
-// Delete a feed post
+// Delete an appointment
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
-    const feed = await Feed.findById(req.params.id);
-    if (!feed) {
-      return res.status(404).json({ msg: 'Feed post not found' });
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment) {
+      return res.status(404).json({ msg: 'Appointment not found' });
     }
-    // Check user authorization
-    if (feed.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(401).json({ msg: 'User not authorized' });
+
+    // Check if user owns the appointment or is the reverend
+    if (appointment.user.toString() !== req.user.id && req.user.role !== 'reverend') {
+      return res.status(403).json({ msg: 'Not authorized to delete this appointment' });
     }
-    await feed.deleteOne();
-    res.json({ msg: 'Feed post removed' });
+
+    await appointment.deleteOne();
+    res.json({ msg: 'Appointment removed' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -81,248 +145,285 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
 module.exports = router;
 
-
-// BACKEND/models/Feed.js;
+// BACKEND/models/Appointment.js;
 const mongoose = require('mongoose');
 
-const FeedSchema = new mongoose.Schema({
+const AppointmentSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  content: {
+  appointmentWith: {
+    type: String,
+    enum: ['reverend', 'evangelist'],
+    required: true
+  },
+  reason: {
     type: String,
     required: true
   },
-  attachments: [{
-    type: String // URLs to images or other media
-  }],
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  date: {
+    type: Date,
+    required: true
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
 
-module.exports = mongoose.model('Feed', FeedSchema);
+module.exports = mongoose.model('Appointment', AppointmentSchema);
 
 
-// BACKEND/server.js
-const express = require('express');
+/* src/styles/Appointments.css */
+div {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 10px 0;
+  background-color: #f9f9f9;
+}
+
+h2 {
+  color: #333;
+}
+
+p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+// BACKEND/models/Notification.js;
 const mongoose = require('mongoose');
-const cors = require('cors');
-const config = require('./config/config');
-const authRoutes = require('./routes/authRoutes');
-const feedRoutes = require('./routes/feedRoutes');
-const testimonialRoutes = require('./routes/testimonialRoutes');
-const appointmentRoutes = require('./routes/appointmentRoutes');
-const donationRoutes = require('./routes/donationRoutes');
-const eventRoutes = require('./routes/eventRoutes');
-const livestreamRoutes = require('./routes/livestreamRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
 
-const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Connect to MongoDB
-mongoose.connect(config.MONGODB_URI)
-.then(() => console.log('Umegongewa MongoDB'))
-.catch((err) => console.error('MongoDB connection error:', err));
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/feed', feedRoutes);
-app.use('/api/testimonials', testimonialRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/donations', donationRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/livestream', livestreamRoutes);
-app.use('/api/notifications', notificationRoutes);
-
-app.listen(config.PORT, () => console.log(`Server running on port ${config.PORT}`));
-
-module.exports = app;
-
-// src/components/PrivateRoute.js;
-import React, { useContext } from 'react';
-import { Navigate } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext';
-
-const PrivateRoute = ({ component: Component, ...rest }) => {
-  const { user, loading } = useContext(AuthContext);
-
-  if (loading) {
-    // You might want to render a loading spinner here
-    return <div>Loading...</div>;
+const NotificationSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  type: {
+    type: String,
+    enum: ['like', 'comment'],
+    required: true
+  },
+  post: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Post',
+    required: true
+  },
+  creator: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  read: {
+    type: Boolean,
+    default: false
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
+});
 
-  return user ? (
-    <Component {...rest} />
-  ) : (
-    <Navigate to="/login" />
-  );
-};
-
-export default PrivateRoute;
+module.exports = mongoose.model('Notification', NotificationSchema);
 
 
-// src/contexts/AuthContext.js;
-import React, { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
-
-export const AuthContext = createContext();
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      axios.get('http://localhost:8000/api/auth/user', {
-        headers: { 'x-auth-token': token }
-      })
-        .then(res => {
-          setUser(res.data); // Set user data from response
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error(err);
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const login = (userData, token) => {
-    localStorage.setItem('token', token); // Store the token
-    setUser(userData); // Set the user data
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token'); // Remove the token
-    setUser(null); // Clear user data
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-// src/pages/Feed.js
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import "../styles/Feed.css";
-
-const Feed = () => {
-  const [feeds, setFeeds] = useState([]);
-
-  useEffect(() => {
-    const fetchFeeds = async () => {
-      try {
-        const res = await axios.get('http://localhost:8000/api/feed');
-        setFeeds(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchFeeds();
-  }, []);
-
-  return (
-    <div>
-      <h2>Church Feed</h2>
-      {feeds.map(feed => (
-        <div key={feed._id}>
-          <p>{feed.content}</p>
-          <p>Posted by: {feed.user.name}</p>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-export default Feed;// BACKEND/routes/feedRoutes.js;
+// BACKEND/routes/notificationRoutes.js;
 const express = require('express');
 const router = express.Router();
-const Feed = require('../models/Feed');
+const Notification = require('../models/Notification');
+const Feed = require('../models/Feed'); // Add this
+const User = require('../models/User'); // Add this
 const authMiddleware = require('../middleware/authMiddleware');
 
-// Create a feed post
-router.post('/', authMiddleware, async (req, res) => {
+// Get all notifications for a user with population
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const { content, attachments } = req.body;
-    const newFeed = new Feed({
-      user: req.user.id,
-      content,
-      attachments
+    const notifications = await Notification.find({ user: req.user.id })
+      .populate('creator', 'name username profileImage')
+      .populate('post', 'content')
+      .sort({ createdAt: -1 });
+
+    const formattedNotifications = notifications.map(notification => {
+      let content = '';
+      if (notification.type === 'like') {
+        content = `${notification.creator.name} liked your post: "${notification.post.content.substring(0, 50)}${notification.post.content.length > 50 ? '...' : ''}"`;
+      } else if (notification.type === 'comment') {
+        content = `${notification.creator.name} commented on your post: "${notification.post.content.substring(0, 50)}${notification.post.content.length > 50 ? '...' : ''}"`;
+      }
+
+      return {
+        _id: notification._id,
+        content,
+        creator: notification.creator,
+        type: notification.type,
+        post: notification.post._id,
+        read: notification.read,
+        createdAt: notification.createdAt
+      };
     });
-    const feed = await newFeed.save();
-    res.json(feed);
+
+    res.json(formattedNotifications);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
 
-// Get all feed posts
-router.get('/', async (req, res) => {
+// Create a notification
+router.post('/create', authMiddleware, async (req, res) => {
   try {
-    const feeds = await Feed.find().sort({ createdAt: -1 }).populate('user', 'name');
-    res.json(feeds);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
+    const { userId, type, postId } = req.body;
 
-// Update a feed post
-router.put('/:id', authMiddleware, async (req, res) => {
-  try {
-    const { content, attachments } = req.body;
-    const feed = await Feed.findById(req.params.id);
-
-    if (!feed) {
-      return res.status(404).json({ msg: 'Feed post not found' });
+    // Verify post exists
+    const post = await Feed.findById(postId);
+    if (!post) {
+      return res.status(404).json({ msg: 'Post not found' });
     }
 
-    // Check user authorization
-    if (feed.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    // Don't create notification if user is acting on their own post
+    if (post.user.toString() === req.user.id) {
+      return res.status(200).json({ msg: 'No notification needed for own post' });
+    }
+
+    // Create notification
+    const notification = new Notification({
+      user: userId,
+      type,
+      post: postId,
+      creator: req.user.id
+    });
+
+    await notification.save();
+
+    // Populate the notification with user and post details
+    const populatedNotification = await Notification.findById(notification._id)
+      .populate('creator', 'name username profileImage')
+      .populate('post', 'content');
+
+    // Format the notification content
+    let content = '';
+    if (type === 'like') {
+      content = `${populatedNotification.creator.name} liked your post: "${populatedNotification.post.content.substring(0, 50)}${populatedNotification.post.content.length > 50 ? '...' : ''}"`;
+    } else if (type === 'comment') {
+      content = `${populatedNotification.creator.name} commented on your post: "${populatedNotification.post.content.substring(0, 50)}${populatedNotification.post.content.length > 50 ? '...' : ''}"`;
+    }
+
+    const formattedNotification = {
+      _id: notification._id,
+      content,
+      creator: populatedNotification.creator,
+      type: notification.type,
+      post: notification.post,
+      read: notification.read,
+      createdAt: notification.createdAt
+    };
+
+    res.json(formattedNotification);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Mark a notification as read
+router.put('/:id/read', authMiddleware, async (req, res) => {
+  try {
+    const notification = await Notification.findById(req.params.id)
+      .populate('creator', 'name username profileImage')
+      .populate('post', 'content');
+
+    if (!notification) {
+      return res.status(404).json({ msg: 'Notification not found' });
+    }
+
+    // Check if the notification belongs to the user
+    if (notification.user.toString() !== req.user.id) {
       return res.status(401).json({ msg: 'User not authorized' });
     }
 
-    // Update the feed post
-    feed.content = content;
-    feed.attachments = attachments;
+    notification.read = true;
+    await notification.save();
 
-    await feed.save();
+    // Format the notification content
+    let content = '';
+    if (notification.type === 'like') {
+      content = `${notification.creator.name} liked your post: "${notification.post.content.substring(0, 50)}${notification.post.content.length > 50 ? '...' : ''}"`;
+    } else if (notification.type === 'comment') {
+      content = `${notification.creator.name} commented on your post: "${notification.post.content.substring(0, 50)}${notification.post.content.length > 50 ? '...' : ''}"`;
+    }
 
-    res.json(feed);
+    const formattedNotification = {
+      _id: notification._id,
+      content,
+      creator: notification.creator,
+      type: notification.type,
+      post: notification.post._id,
+      read: notification.read,
+      createdAt: notification.createdAt
+    };
+
+    res.json(formattedNotification);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
 
-// Delete a feed post
+// Mark all notifications as read
+router.put('/read-all', authMiddleware, async (req, res) => {
+  try {
+    await Notification.updateMany(
+      { user: req.user.id, read: false },
+      { $set: { read: true } }
+    );
+
+    res.json({ msg: 'All notifications marked as read' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Delete a notification
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
-    const feed = await Feed.findById(req.params.id);
-    if (!feed) {
-      return res.status(404).json({ msg: 'Feed post not found' });
+    const notification = await Notification.findById(req.params.id);
+
+    if (!notification) {
+      return res.status(404).json({ msg: 'Notification not found' });
     }
-    // Check user authorization
-    if (feed.user.toString() !== req.user.id && req.user.role !== 'admin') {
+
+    // Check if the notification belongs to the user
+    if (notification.user.toString() !== req.user.id) {
       return res.status(401).json({ msg: 'User not authorized' });
     }
-    await feed.deleteOne();
-    res.json({ msg: 'Feed post removed' });
+
+    await notification.deleteOne(); // Updated from remove() to deleteOne()
+
+    res.json({ msg: 'Notification removed' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Get unread notification count
+router.get('/unread-count', authMiddleware, async (req, res) => {
+  try {
+    const count = await Notification.countDocuments({
+      user: req.user.id,
+      read: false
+    });
+    res.json({ count });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -330,199 +431,3 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
-
-
-// BACKEND/models/Feed.js;
-const mongoose = require('mongoose');
-
-const FeedSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  content: {
-    type: String,
-    required: true
-  },
-  attachments: [{
-    type: String // URLs to images or other media
-  }],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
-
-module.exports = mongoose.model('Feed', FeedSchema);
-
-
-// BACKEND/server.js
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const config = require('./config/config');
-const authRoutes = require('./routes/authRoutes');
-const feedRoutes = require('./routes/feedRoutes');
-const testimonialRoutes = require('./routes/testimonialRoutes');
-const appointmentRoutes = require('./routes/appointmentRoutes');
-const donationRoutes = require('./routes/donationRoutes');
-const eventRoutes = require('./routes/eventRoutes');
-const livestreamRoutes = require('./routes/livestreamRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-
-const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Connect to MongoDB
-mongoose.connect(config.MONGODB_URI)
-.then(() => console.log('Umegongewa MongoDB'))
-.catch((err) => console.error('MongoDB connection error:', err));
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/feed', feedRoutes);
-app.use('/api/testimonials', testimonialRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/donations', donationRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/livestream', livestreamRoutes);
-app.use('/api/notifications', notificationRoutes);
-
-app.listen(config.PORT, () => console.log(`Server running on port ${config.PORT}`));
-
-module.exports = app;
-
-// src/components/PrivateRoute.js;
-import React, { useContext } from 'react';
-import { Navigate } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext';
-
-const PrivateRoute = ({ component: Component, ...rest }) => {
-  const { user, loading } = useContext(AuthContext);
-
-  if (loading) {
-    // You might want to render a loading spinner here
-    return <div>Loading...</div>;
-  }
-
-  return user ? (
-    <Component {...rest} />
-  ) : (
-    <Navigate to="/login" />
-  );
-};
-
-export default PrivateRoute;
-
-
-// src/contexts/AuthContext.js;
-import React, { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
-
-export const AuthContext = createContext();
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      axios.get('http://localhost:8000/api/auth/user', {
-        headers: { 'x-auth-token': token }
-      })
-        .then(res => {
-          setUser(res.data); // Set user data from response
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error(err);
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const login = (userData, token) => {
-    localStorage.setItem('token', token); // Store the token
-    setUser(userData); // Set the user data
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token'); // Remove the token
-    setUser(null); // Clear user data
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-// src/pages/Feed.js
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import "../styles/Feed.css";
-
-const Feed = () => {
-  const [feeds, setFeeds] = useState([]);
-
-  useEffect(() => {
-    const fetchFeeds = async () => {
-      try {
-        const res = await axios.get('http://localhost:8000/api/feed');
-        setFeeds(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchFeeds();
-  }, []);
-
-  return (
-    <div>
-      <h2>Church Feed</h2>
-      {feeds.map(feed => (
-        <div key={feed._id}>
-          <p>{feed.content}</p>
-          <p>Posted by: {feed.user.name}</p>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-export default Feed;
-
-
-/* src/styles/Feed.css */
-@import './common.css';
-
-.feed-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.feed-item {
-    width: 90%;
-    max-width: 600px;
-    margin: 10px 0;
-}
-
-.feed-item p {
-    color: #444;
-}
-
-@media (max-width: 768px) {
-    .feed-item p {
-        font-size: 0.9em;
-    }
-}
-

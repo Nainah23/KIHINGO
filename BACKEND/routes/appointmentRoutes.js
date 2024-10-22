@@ -1,27 +1,10 @@
-// BACKEND/routes/appointmentRoutes.js;
+// BACKEND/routes/appointmentRoutes.js
 const express = require('express');
 const router = express.Router();
 const Appointment = require('../models/Appointment');
+const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
-
-// Book an appointment
-router.post('/', authMiddleware, async (req, res) => {
-  try {
-    const { appointmentWith, reason, date } = req.body;
-    const newAppointment = new Appointment({
-      user: req.user.id,
-      appointmentWith,
-      reason,
-      date
-    });
-
-    const appointment = await newAppointment.save();
-    res.json(appointment);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
+const Notification = require('../models/Notification');
 
 // Get all appointments for a user
 router.get('/', authMiddleware, async (req, res) => {
@@ -34,7 +17,21 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-// Update appointment status (for admin, reverend, or evangelist)
+// Get all appointments for the reverend
+router.get('/reverend', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'reverend') {
+      return res.status(403).json({ msg: 'Not authorized' });
+    }
+    const appointments = await Appointment.find({ appointmentWith: req.user.id }).sort({ date: 1 });
+    res.json(appointments);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Update appointment status (for reverend only)
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { status } = req.body;
@@ -44,8 +41,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ msg: 'Appointment not found' });
     }
 
-    // Check if user has permission to update
-    if (!['admin', 'reverend', 'evangelist'].includes(req.user.role)) {
+    // Check if user is the reverend
+    if (req.user.role !== 'reverend') {
       return res.status(403).json({ msg: 'Not authorized to update appointment status' });
     }
 
@@ -68,8 +65,8 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ msg: 'Appointment not found' });
     }
 
-    // Check if user owns the appointment or is an admin
-    if (appointment.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    // Check if user owns the appointment or is the reverend
+    if (appointment.user.toString() !== req.user.id && req.user.role !== 'reverend') {
       return res.status(403).json({ msg: 'Not authorized to delete this appointment' });
     }
 
@@ -77,6 +74,44 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     res.json({ msg: 'Appointment removed' });
   } catch (err) {
     console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Book an appointment
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    const { reason, date } = req.body;
+
+    // Find the reverend
+    const reverend = await User.findOne({ role: 'reverend' });
+    if (!reverend) {
+      return res.status(404).json({ msg: 'No reverend found in the system' });
+    }
+
+    const newAppointment = new Appointment({
+      user: req.user.id,
+      appointmentWith: reverend._id,
+      reason,
+      date
+    });
+
+    const appointment = await newAppointment.save();
+
+    // Create notification for the reverend
+    const notification = new Notification({
+      user: reverend._id,
+      type: 'appointment',
+      post: appointment._id,
+      creator: req.user.id
+    });
+
+    await notification.save();
+
+    res.json(appointment);
+  } catch (err) {
+    console.error(err.message);
+    console.log("Noma kwa booking", err);
     res.status(500).send('Server Error');
   }
 });

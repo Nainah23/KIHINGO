@@ -2,6 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const Feed = require('../models/Feed');
+const Notification = require('../models/Notification');
+const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Create a feed post
@@ -17,6 +19,25 @@ router.post('/', authMiddleware, async (req, res) => {
     res.json(feed);
   } catch (err) {
     console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.get('/user/:username', async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    const posts = await Feed.find({ user: user._id })
+      .sort({ createdAt: -1 })
+      .populate('user', 'name username');
+    
+    res.json(posts);
+  } catch (err) {
+    console.error(err.message);
+    console.log(err, 'error in feed post fetch');
     res.status(500).send('Server Error');
   }
 });
@@ -100,52 +121,78 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Add reaction to a post
+// In your reaction handler
 router.post('/:id/react', authMiddleware, async (req, res) => {
   try {
     const { type } = req.body; // 'like' or emoji
-    const feed = await Feed.findById(req.params.id);
+    const post = await Post.findById(req.params.id);
 
-    if (!feed) return res.status(404).json({ msg: 'Feed post not found' });
+    if (!post) return res.status(404).json({ msg: 'Post not found' });
 
     // Check if the user already reacted
-    const existingReactionIndex = feed.reactions.findIndex(r => r.user.toString() === req.user.id);
-    if (existingReactionIndex !== -1) {
-      // Remove previous reaction
-      feed.reactions.splice(existingReactionIndex, 1);
-    }
+    const existingReactionIndex = post.reactions.findIndex(r => r.user.toString() === req.user.id);
     
-    // Add the new reaction
-    const reaction = { user: req.user.id, type };
-    feed.reactions.push(reaction);
+    if (existingReactionIndex !== -1) {
+      // Remove previous reaction if it's the same type or update it
+      if (post.reactions[existingReactionIndex].type === type) {
+        post.reactions.splice(existingReactionIndex, 1); // Remove reaction
+      } else {
+        post.reactions[existingReactionIndex].type = type; // Update to new reaction type
+      }
+    } else {
+      // Add the new reaction
+      const reaction = { user: req.user.id, type };
+      post.reactions.push(reaction);
 
-    await feed.save();
-    return res.status(200).json(feed);
+      // Create notification for post owner if it's a new reaction
+      if (req.body.action === 'add' && post.user.toString() !== req.user.id) {
+        await Notification.create({
+          user: post.user,
+          type: 'like',
+          post: post._id,
+          creator: req.user.id
+        });
+      }
+    }
+
+    await post.save();
+    return res.json({ reactions: post.reactions });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ msg: 'Server error' });
+    return res.status(500).send('Server Error');
   }
 });
 
-// Add comment to a post
+
+// In your comment handler
 router.post('/:id/comment', authMiddleware, async (req, res) => {
   try {
     const { content } = req.body;
-    const feed = await Feed.findById(req.params.id);
+    const post = await Post.findById(req.params.id);
 
-    if (!feed) return res.status(404).json({ msg: 'Feed post not found' });
+    if (!post) return res.status(404).json({ msg: 'Post not found' });
 
+    // Handle comment logic
     const comment = { user: req.user.id, content };
-    feed.comments.push(comment);
-    await feed.save();
+    post.comments.push(comment);
+    await post.save();
 
-    res.json(feed);
+    // Create notification for post owner if the comment is not from them
+    if (post.user.toString() !== req.user.id) {
+      await Notification.create({
+        user: post.user,
+        type: 'comment',
+        post: post._id,
+        creator: req.user.id
+      });
+    }
+
+    res.json(post);
   } catch (err) {
-    console.error(err.message);
+    console.error(err);
     res.status(500).send('Server Error');
   }
 });
-
 
 
 module.exports = router;

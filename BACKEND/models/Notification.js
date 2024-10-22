@@ -1,3 +1,4 @@
+// BACKEND/models/Notification.js;
 const mongoose = require('mongoose');
 
 const NotificationSchema = new mongoose.Schema({
@@ -8,11 +9,17 @@ const NotificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['feed', 'event', 'livestream', 'donation'],
+    enum: ['like', 'comment', 'appointment'],
     required: true
   },
-  content: {
-    type: String,
+  post: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Appointment',
+    required: true
+  },
+  creator: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   read: {

@@ -1,3 +1,4 @@
+// src/pages/Home.js;
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
@@ -110,35 +111,6 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      <div className="header">
-        <div className="greeting">
-          Hello, {user ? user.name : 'Guest'}
-        </div>
-        <div className="user-menu">
-          {user ? (
-            <div className="dropdown">
-              <button onClick={toggleMenu} className="user-button">
-                {user.name ? user.name.substring(0, 2).toUpperCase() : 'UN'}
-              </button>
-              {isMenuOpen && (
-                <div className="dropdown-menu">
-                  {navItems.map((item) => (
-                    <DropdownButton key={item.name} item={item} />
-                  ))}
-                  <button onClick={handleLogout} className="dropdown-button">
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="auth-buttons">
-              <Link to="/login" className="login-button">Login</Link>
-              <Link to="/register" className="signup-button">Sign Up</Link>
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* Navigation Bar */}
       <nav className="nav-bar">

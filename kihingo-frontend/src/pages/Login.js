@@ -6,7 +6,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import "../styles/Login.css";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useContext(AuthContext);
@@ -16,7 +16,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:8000/api/auth/login', { email, password });
+      const response = await axios.post('http://localhost:8000/api/auth/login', { username, password });
       login(response.data.user, response.data.token);
       const from = location.state?.from?.pathname || '/';
       navigate(from, { replace: true });
@@ -36,12 +36,12 @@ const Login = () => {
         <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">Welcome Back</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-gray-700 text-sm font-semibold mb-2">Email</label>
+            <label htmlFor="username" className="block text-gray-700 text-sm font-semibold mb-2">Username</label>
             <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="username"
+              type="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
               required
             />

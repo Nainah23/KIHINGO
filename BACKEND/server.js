@@ -11,6 +11,8 @@ const donationRoutes = require('./routes/donationRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const livestreamRoutes = require('./routes/livestreamRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const path = require('path');
+
 
 const app = express();
 
@@ -41,6 +43,8 @@ const bibleVerses = [
     const randomIndex = Math.floor(Math.random() * bibleVerses.length);
     return bibleVerses[randomIndex];
   };
+
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
   
   // Endpoint to get a random Bible verse
   app.get('/api/bible-verse', (req, res) => {

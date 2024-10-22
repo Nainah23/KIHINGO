@@ -1,7 +1,7 @@
 ### Variables
 @baseUrl = http://localhost:8000/api
-@email = "naiawriters@gmnail.com
-@password = yourpassword
+@email = "kam@gmnail.com
+@password = 2000
 @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcwNDE1NDVhMzhiZDc5MDc1OTk2MTU1Iiwicm9sZSI6ImFkbWluIn0sImlhdCI6MTcyODM4NDkxOSwiZXhwIjoxNzI4Mzg4NTE5fQ.uRsnGKA9egMV9Y-mNq_2TK2m0NfYlKDrNXbHDdIQbXQ
 
 ### Auth Routes

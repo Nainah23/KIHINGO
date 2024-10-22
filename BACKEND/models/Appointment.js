@@ -8,8 +8,8 @@ const AppointmentSchema = new mongoose.Schema({
     required: true
   },
   appointmentWith: {
-    type: String,
-    enum: ['reverend', 'evangelist'],
+    type: mongoose.Schema.Types.ObjectId, // Change to ObjectId
+    ref: 'User', // Reference to User model
     required: true
   },
   reason: {
