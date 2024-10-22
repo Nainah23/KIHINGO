@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import '../styles/Appointments.css';
 
@@ -12,8 +12,9 @@ const Appointments = () => {
   const [displayWelcomeMessage, setDisplayWelcomeMessage] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [scrollCount, setScrollCount] = useState(0);
-  const [bibleVerses, setBibleVerses] = useState([]);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollCount = useRef(0);
+  const verseRef = useRef(null);
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return '/default-profile.png';
@@ -49,44 +50,53 @@ const Appointments = () => {
     }
   }, []);
 
-  // Function to load Bible verses from the verses.txt file
-  const loadBibleVerses = async () => {
+  const fetchRandomBibleVerse = useCallback(async () => {
     try {
-      const res = await fetch('/verses.txt');
-      const text = await res.text();
-      const versesArray = text.split('\n').filter(verse => verse.trim() !== '');
-      setBibleVerses(versesArray);
+      const res = await fetch('http://localhost:8000/api/bible-verse');
+      if (!res.ok) throw new Error('Failed to fetch Bible verse');
+      const data = await res.json();
+      // Only update verse if not currently scrolling
+      if (!isScrolling) {
+        setRandomVerse(data.verse);
+        scrollCount.current = 0;
+        startScrollAnimation();
+      }
     } catch (error) {
-      console.error('Error loading verses:', error);
+      console.error('Error fetching Bible verse:', error);
+    }
+  }, [isScrolling]);
+
+  const startScrollAnimation = () => {
+    setIsScrolling(true);
+    if (verseRef.current) {
+      verseRef.current.style.animation = 'none';
+      // Properly trigger reflow
+      void verseRef.current.offsetHeight;
+      verseRef.current.style.animation = 'scrollVerse 15s linear';
     }
   };
 
-  // Function to handle verse scrolling logic
-  const handleVerseScroll = () => {
-    if (scrollCount < 2) {
-      setScrollCount(scrollCount + 1);
+  const handleScrollEnd = () => {
+    scrollCount.current += 1;
+    if (scrollCount.current < 2) {
+      // Start another scroll cycle
+      startScrollAnimation();
     } else {
-      setScrollCount(0);
-      const randomIndex = Math.floor(Math.random() * bibleVerses.length);
-      setRandomVerse(bibleVerses[randomIndex]);
+      // After two complete scrolls, fetch new verse
+      setIsScrolling(false);
+      fetchRandomBibleVerse();
     }
   };
 
   useEffect(() => {
-    loadBibleVerses();
+    fetchRandomBibleVerse();
     fetchAppointments();
     fetchUserProfile();
-
-    if (bibleVerses.length > 0) {
-      const randomIndex = Math.floor(Math.random() * bibleVerses.length);
-      setRandomVerse(bibleVerses[randomIndex]);
-    }
 
     if ((userProfile.name || user?.username) && !isAnimating) {
       setIsAnimating(true);
       const firstName = userProfile.name?.split(' ')[0] || user?.username || 'Friend';
       const message = `🌟 Warm Greetings, ${firstName}! Ready to book an appointment with the Reverend? Let's make it happen! 🌟`;
-
       setDisplayWelcomeMessage('');
 
       const animateMessage = async () => {
@@ -94,16 +104,19 @@ const Appointments = () => {
           await new Promise(resolve => setTimeout(resolve, 50));
           setDisplayWelcomeMessage(message.slice(0, i));
         }
-        setIsAnimating(false); // Animation runs only once
+        setIsAnimating(false);
       };
 
       animateMessage();
     }
-
-    // Set an interval to scroll verses every few seconds
-    const interval = setInterval(handleVerseScroll, 3000); // Change verse every 3 seconds
-    return () => clearInterval(interval); // Cleanup on component unmount
-  }, [fetchUserProfile, fetchAppointments, userProfile.name, user?.username, isAnimating, bibleVerses, scrollCount]);
+  }, [
+    fetchUserProfile,
+    fetchAppointments,
+    fetchRandomBibleVerse,
+    userProfile.name,
+    user?.username,
+    isAnimating
+  ]);
 
   const handleBooking = async (e) => {
     e.preventDefault();
@@ -131,7 +144,13 @@ const Appointments = () => {
   return (
     <div className="appointments-container">
       <div className="bible-verse-scroll">
-        <p>{randomVerse}</p>
+        <p 
+          ref={verseRef}
+          className="scrolling-verse"
+          onAnimationEnd={handleScrollEnd}
+        >
+          {randomVerse}
+        </p>
       </div>
 
       <div className="grid-container">
@@ -153,7 +172,7 @@ const Appointments = () => {
         <div className="appointments-section">
           <h3 className="welcome-message">{displayWelcomeMessage}</h3>
 
-          <h2>My Appointments</h2>
+          <h2 className="my-appointments">My Appointments</h2>
           {appointments.map((appointment, index) => (
             <div key={appointment._id || index} className="appointment-card">
               <p><strong>Appointment {index + 1}</strong></p>
