@@ -23,13 +23,13 @@
 }
 
 .footer-section h3 {
-  color: rgb(10, 10, 10); /* White color for headings */
+  color: white; /* White color for headings */
   margin-bottom: 1rem;
   font-size: 1.2rem;
 }
 
 .footer-section p {
-  color: rgb(15, 15, 15); /* Ensure paragraph text is white */
+  color: white; /* Ensure paragraph text is white */
 }
 
 .footer-section ul {
@@ -43,7 +43,7 @@
 }
 
 .footer-section ul li a {
-  color: rgb(23, 22, 22); /* White color for links */
+  color: white; /* White color for links */
   text-decoration: none;
   transition: color 0.3s ease;
 }
@@ -95,7 +95,7 @@
 .footer-bottom p {
   margin: 0;
   font-size: 0.875rem;
-  color: rgb(16, 15, 15); /* Ensure copyright text is white */
+  color: white;/* Ensure copyright text is white */
 }
 
 @media (max-width: 768px) {

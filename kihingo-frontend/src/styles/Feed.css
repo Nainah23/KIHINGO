@@ -1,211 +1,318 @@
-/* Feed.css */
+/* Feed Container Layout */
+.feed-container {
+  display: flex;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
 
-:root {
-    --primary-red: #a1626a;
-    --primary-purple: #cbbad4;
-    --light-purple: #e8e0f0;
-    --dark-red: #8a4e55;
-    --off-white: #f9f7fa;
-    --dark-gray: #333333;
-  }
-  
-  body {
-    background-color: var(--off-white);
-    color: var(--dark-gray);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-  
-  .feed-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  
-  .back-home-button {
-    background-color: rgb(111, 159, 34); /* Updated to the specified color */
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-  }
-  
-  .back-home-button:hover {
-    background-color: var(--primary-red); /* Optional: You can change this if you want a different hover color */
-  }  
-  
-  .bible-verse-container {
-    background-color: var(--light-purple);
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-  }
-  
-  .bible-verse-scroll {
-    display: inline-block;
-    white-space: nowrap;
-    animation: scroll-left 30s linear infinite;
-    color: var(--primary-red);
-    font-style: italic;
-  }
-  
-  @keyframes scroll-left {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
-  }
-  
-  h2 {
-    color: var(--primary-red);
-    text-align: center;
-    font-size: 2.5em;
-    margin-bottom: 30px;
-  }
-  
-  .new-post-form {
-    background-color: white;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .new-post-form input[type="text"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--primary-purple);
-    border-radius: 5px;
-    margin-bottom: 10px;
-  }
-  
-  .new-post-form button {
-    background-color: var(--primary-red);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .new-post-form button:hover {
-    background-color: var(--dark-red);
-  }
-  
-  .feed-post {
-    background-color: beige;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-  }
-  
-  .feed-post:hover {
-    transform: translateY(-5px);
-  }
-  
-  .user-name {
-    color: var(--primary-red);
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
-  
-  .content {
-    margin-bottom: 15px;
-    line-height: 1.6;
-  }
-  
-  .attachments img {
-    max-width: 100%;
-    border-radius: 5px;
-    margin-bottom: 15px;
-  }
-  
-  .reaction-section {
-    display: flex;
-    justify-content: flex-start; /* Aligns the buttons to the left */
-    align-items: center;
-    margin-top: 10px;
-    width: 30%; 
-    background-color: beige;
-    border: none;/* Make the reaction section smaller */
-  }
-  
-  .reaction-buttons {
-    display: flex;
-    gap: 5px; 
-    background-color: beige;
-    border: none;/* Reduced gap between like and reply buttons */
-  }
-  
-  .reaction-button, .reply-button {
-    background-color: var(--light-purple);
-    /*padding: 4px 8px; Reduced padding to make the buttons smaller */
-    border-radius: 15px; /* Reduced the border-radius to match the smaller size */
-    cursor: pointer;
-    font-size: 1.2em; /* Reduced font size */
-    transition: background-color 0.3s ease;
-  }
-  
-  .reaction-button {
-    font-size: 1.4em; /* Increased font size */
-    }
-  
-  .reaction-button:hover, .reply-button:hover {
-    background-color: var(--primary-purple);
-  }
-  
-  
-  @media (max-width: 600px) {
-    .feed-container {
-      padding: 10px;
-    }
-    
-    h2 {
-      font-size: 2em;
-    }
-  }
+/* Sidebar Styles */
+.sidebar {
+  width: 300px;
+  background-color: #cbbad4;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
 
-  .post-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .post-actions {
-    position: relative;
-  }
-  
-  .three-dots-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
-  
-  .post-actions-dropdown {
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 5px 0;
-    z-index: 1000;
-  }
-  
-  .post-actions-dropdown button {
-    display: block;
-    width: 100%;
-    padding: 5px 10px;
-    text-align: left;
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
-  
-  .post-actions-dropdown button:hover {
-    background-color: #f0f0f0;
-  }
+.user-profile {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.profile-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.user-name {
+  color: #a1626a;
+  margin-bottom: 5px;
+}
+
+.user-info {
+  color: #333;
+  margin-bottom: 5px;
+}
+
+/* Notifications Panel */
+.notifications-pane {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.notifications-title {
+  color: #a1626a;
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.notification-count {
+  background-color: #a1626a;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.8em;
+  margin-left: 5px;
+}
+
+.notification-item {
+  border-bottom: 1px solid #eee;
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.notification-content {
+  margin: 0 0 5px 0;
+}
+
+.notification-time {
+  color: #666;
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  padding: 20px;
+}
+
+.back-home-button {
+  background-color: #a1626a;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.bible-verse-container {
+  background-color: #cbbad4;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.bible-verse-scroll {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.feed-title {
+  color: #a1626a;
+  margin-bottom: 20px;
+}
+
+/* Post Form */
+.post-form {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.post-textarea {
+  width: 100%; /* Makes it take up full width of its container */
+  padding: 15px; /* Adds extra padding for more comfortable typing */
+  border-radius: 8px; /* Slightly more rounded corners for a softer look */
+  border: 1px solid #ccc;
+  resize: vertical; /* Allows the user to resize the height but not the width */
+  min-height: 60px; /* Keeps the initial height */
+  max-height: 300px; /* Sets a max height before scrolling */
+  font-size: 16px; /* Sets a readable font size */
+  box-sizing: border-box; /* Ensures padding doesn’t affect the element’s width */
+}
+
+.emoji-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5em;
+  padding: 0 10px;
+}
+
+.emoji-picker-container {
+  position: absolute;
+  z-index: 1000;
+  top: 100%;
+  left: 0;
+}
+
+.post-submit-button {
+  background-color: #a1626a;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.post-submit-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Feed Items */
+.feed-item {
+  background-color: white;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.feed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.author-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.author-name {
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.author-name:hover {
+  text-decoration: underline;
+}
+
+.author-username {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.feed-time {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.feed-content {
+  margin-bottom: 15px;
+  cursor: pointer;
+  word-break: break-word;
+}
+
+/* Dropdown Menu */
+.dropdown-wrapper {
+  position: relative;
+}
+
+.dropdown-icon {
+  cursor: pointer;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  z-index: 1;
+}
+
+.edit-button,
+.delete-button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.edit-button:hover,
+.delete-button:hover {
+  background-color: #f5f5f5;
+}
+
+/* Edit Post Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+}
+
+.edit-textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+  min-height: 100px;
+  resize: vertical;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.update-button {
+  background-color: #a1626a;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background-color: #ccc;
+  color: black;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Reactions */
+.reactions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.reaction-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.reaction-button:hover {
+  background-color: #f5f5f5;
+}

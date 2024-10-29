@@ -1,57 +1,238 @@
 // src/pages/Feed.js;
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { MoreVertical, Bell } from 'lucide-react';
+import { MoreVertical, Bell, MessageCircle, ThumbsUp } from 'lucide-react';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
+import '../styles/Feed.css';
 
+// Move utility functions outside component
 const formatTimeElapsed = (date) => {
+  if (!date) return '';
   const now = new Date();
   const posted = new Date(date);
   const diffInMinutes = Math.floor((now - posted) / (1000 * 60));
   
   if (diffInMinutes < 1) return 'just now';
-  if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+  if (diffInMinutes < 60) return `${diffInMinutes}m`;
   
   const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours} hours ago`;
+  if (diffInHours < 24) return `${diffInHours}h`;
   
   const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) return `${diffInDays} days ago`;
+  if (diffInDays < 7) return `${diffInDays}d`;
   
   return posted.toLocaleDateString();
 };
 
+// API service class instead of object
+class ApiService {
+  constructor(navigate) {
+    this.navigate = navigate;
+  }
+
+  getHeaders() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.navigate('/login');
+      throw new Error('No authentication token found');
+    }
+    return {
+      headers: { 
+        'x-auth-token': token,
+        'Content-Type': 'application/json'
+      }
+    };
+  }
+
+  async fetchFeeds() {
+    try {
+      const response = await axios.get('http://localhost:8000/api/feed');
+      return response.data;
+    } catch (error) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
+  async getImageUrl(imagePath) {
+    if (!imagePath) return '/default-profile.png';
+    const cleanPath = imagePath.replace(/^uploads\//, '');
+    return `http://localhost:8000/uploads/${cleanPath}`;
+  }
+
+  async fetchUserProfile(username) {
+    if (!username) {
+      throw new Error('Username is required');
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const config = token ? { headers: { 'x-auth-token': token } } : {};
+      const response = await axios.get(
+        `http://localhost:8000/api/auth/profile/${username}`,
+        config
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      if (error.response?.status === 404) {
+        throw new Error('User not found');
+      }
+      throw new Error('Failed to fetch user profile');
+    }
+  }
+
+  async fetchNotifications() {
+    try {
+      const response = await axios.get(
+        'http://localhost:8000/api/notifications',
+        this.getHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
+  async fetchBibleVerse() {
+    try {
+      const response = await axios.get('http://localhost:8000/api/bible-verse');
+      return response.data.verse;
+    } catch (error) {
+      console.error('Error fetching Bible verse:', error);
+      return 'Unable to load verse at this time.';
+    }
+  }
+
+  async createPost(content) {
+    try {
+      const config = this.getHeaders();
+      const response = await axios.post(
+        `http://localhost:8000/api/feed`,
+        { content },
+        config
+      );
+      
+      // Ensure we have the complete user details in the response
+      const postWithUser = {
+        ...response.data,
+        user: {
+          _id: response.data.user || response.data.user._id,
+          name: response.data.user.name || '',
+          username: response.data.user.username || ''
+        }
+      };
+
+      return postWithUser;
+    } catch (error) {
+      this.handleApiError(error);
+      throw new Error('Failed to create post');
+    }
+  }
+
+  async updatePost(postId, content) {
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/api/feed/${postId}`,
+        { content },
+        this.getHeaders()
+      );
+  
+      // Ensure we have the complete user details in the response
+      const postWithUser = {
+        ...response.data,
+        user: {
+          _id: response.data.user._id,
+          name: response.data.user.name,
+          username: response.data.user.username
+        }
+      };
+  
+      return postWithUser;
+    } catch (error) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
+  async deletePost(postId) {
+    try {
+      await axios.delete(
+        `http://localhost:8000/api/feed/${postId}`,
+        this.getHeaders()
+      );
+    } catch (error) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
+  async handleReaction(feedId, type, action) {
+    try {
+      const response = await axios.post(
+        `http://localhost:8000/api/feed/${feedId}/react`,
+        { type, action },
+        this.getHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
+  handleApiError(error) {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      this.navigate('/login');
+    }
+    console.error('API Error:', error);
+  }
+}
+
 const EditPostModal = ({ post, onClose, onUpdate }) => {
-  const [content, setContent] = useState(post.content);
+  const [content, setContent] = useState(post?.content || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onUpdate(post._id, content);
-    onClose();
+    if (!post?._id || !content.trim() || isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+      await onUpdate(post._id, content);
+      onClose();
+    } catch (error) {
+      console.error('Failed to update post:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div style={styles.modalOverlay}>
-      <div style={styles.modalContent}>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
         <form onSubmit={handleSubmit}>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            style={styles.editTextarea}
+            className="edit-textarea"
+            placeholder="What's on your mind?"
           />
           <button 
             type="button"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            style={styles.emojiButton}
+            className="emoji-button"
           >
             😊
           </button>
           {showEmojiPicker && (
-            <div style={styles.emojiPickerContainer}>
+            <div className="emoji-picker-container">
               <Picker 
                 data={data} 
                 onEmojiSelect={(emoji) => {
@@ -61,9 +242,22 @@ const EditPostModal = ({ post, onClose, onUpdate }) => {
               />
             </div>
           )}
-          <div style={styles.modalButtons}>
-            <button type="submit" style={styles.updateButton}>Update</button>
-            <button type="button" onClick={onClose} style={styles.cancelButton}>Cancel</button>
+          <div className="modal-buttons">
+            <button 
+              type="submit" 
+              className="update-button"
+              disabled={isSubmitting || !content.trim()}
+            >
+              {isSubmitting ? 'Updating...' : 'Update'}
+            </button>
+            <button 
+              type="button" 
+              onClick={onClose} 
+              className="cancel-button"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
           </div>
         </form>
       </div>
@@ -81,7 +275,38 @@ const Feed = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const timeUpdateInterval = useRef(null);
+  const emojiPickerRef = useRef(null);
+  const api = React.useMemo(() => new ApiService(navigate), [navigate]);
+
+
+  // Handler functions
+  const handleAuthorClick = async (e, username) => {
+    e.preventDefault();
+    e.stopPropagation();
+  
+    if (username) {
+      try {
+        const userProfile = await api.fetchUserProfile(username);
+        const userId = userProfile._id; // assuming user profile contains `_id`
+        navigate(`/profile/${userId}`);
+      } catch (error) {
+        console.error("Failed to navigate to user profile:", error);
+      }
+    }
+  };  
+
+  const handlePostClick = (postId) => {
+    navigate(`/feed/${postId}`);
+  };
+
+  const toggleDropdown = (feedId) => {
+    setActiveDropdown(prev => prev === feedId ? null : feedId);
+  };
 
   const onEmojiSelect = (emoji) => {
     setNewPostContent(prev => prev + emoji.native);
@@ -89,178 +314,221 @@ const Feed = () => {
   };
 
   useEffect(() => {
-    fetchFeeds();
-    fetchNotifications();
-    fetchBibleVerse();
-    fetchUserProfile();
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchUserProfile = async () => {
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        if (!user) {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            navigate('/login');
+            return;
+          }
+
+          try {
+            const res = await axios.get('http://localhost:8000/api/auth/user', {
+              headers: { 'x-auth-token': token }
+            });
+            if (!res.data) {
+              navigate('/login');
+              return;
+            }
+          } catch (err) {
+            localStorage.removeItem('token');
+            navigate('/login');
+            return;
+          }
+        }
+
+        // Load all data in parallel
+        const [feedsData, notificationsData, verseData, profileData] = await Promise.all([
+          api.fetchFeeds(),
+          api.fetchNotifications().catch(() => []),
+          api.fetchBibleVerse().catch(() => ''),
+          user ? api.fetchUserProfile(user.username).catch(() => null) : null
+        ]);
+
+        // Ensure each feed has complete user details
+        const feedsWithUserDetails = await Promise.all(
+          feedsData.map(async (feed) => {
+            try {
+              const userDetails = await api.fetchUserProfile(feed.user.username);
+              return {
+                ...feed,
+                user: {
+                  ...feed.user,
+                  ...userDetails
+                }
+              };
+            } catch (err) {
+              return feed;
+            }
+          })
+        );
+
+        setFeeds(feedsWithUserDetails);
+        setNotifications(notificationsData);
+        setBibleVerse(verseData);
+        setUserProfile(profileData);
+
+      } catch (err) {
+        setError('Failed to load feed data. Please try refreshing the page.');
+        console.error('Error loading initial data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitialData();
+
+    timeUpdateInterval.current = setInterval(() => {
+      setFeeds(prevFeeds => [...prevFeeds]);
+    }, 60000);
+
+    return () => {
+      if (timeUpdateInterval.current) {
+        clearInterval(timeUpdateInterval.current);
+      }
+    };
+  }, [user, navigate, api]);
+
+  const handlePostSubmit = async (e) => {
+    e.preventDefault();
+    if (!user || !newPostContent.trim() || isSubmitting) return;
+
     try {
-      const res = await axios.get(`http://localhost:8000/api/auth/profile/${user.username}`, {
-        headers: { 'x-auth-token': localStorage.getItem('token') }
-      });
-      setUserProfile(res.data);
+      setIsSubmitting(true);
+      const newPost = await api.createPost(newPostContent);
+      const completePost = {
+        ...newPost,
+        user: {
+          _id: user._id,
+          name: user.name,
+          username: user.username,
+          ...newPost.user // Merge any additional user details from the response
+        },
+        reactions: [],
+        comments: [],
+        createdAt: new Date().toISOString()
+      };
+
+      // Update the feeds state with the complete post
+      setFeeds(prevFeeds => [completePost, ...prevFeeds]);
+      setNewPostContent('');
     } catch (err) {
-      console.error(err);
+      setError('Failed to create post. Please try again.');
+      console.error('Error creating post:', err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const fetchFeeds = async () => {
-    try {
-      const res = await axios.get('http://localhost:8000/api/feed');
-      setFeeds(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const handleUpdate = async (feedId, newContent) => {
+    if (!newContent.trim()) return;
 
-  const fetchNotifications = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/api/notifications',
-        { headers: { 'x-auth-token': localStorage.getItem('token') } }
+      const updatedPost = await api.updatePost(feedId, newContent);
+      setFeeds(prevFeeds =>
+        prevFeeds.map(feed =>
+          feed._id === feedId ? updatedPost : feed
+        )
       );
-      setNotifications(res.data);
+      setEditingPost(null);
     } catch (err) {
-      console.error(err);
+      setError('Failed to update post. Please try again.');
+      console.error('Error updating post:', err);
     }
   };
 
-  const fetchBibleVerse = async () => {
+  const handleDelete = async (feedId) => {
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+
     try {
-      const res = await axios.get('http://localhost:8000/api/bible-verse');
-      setBibleVerse(res.data.verse);
+      await api.deletePost(feedId);
+      setFeeds(prevFeeds => prevFeeds.filter(feed => feed._id !== feedId));
     } catch (err) {
-      console.error(err);
+      setError('Failed to delete post. Please try again.');
+      console.error('Error deleting post:', err);
     }
   };
 
   const handleReaction = async (feedId) => {
     if (!user) {
-      alert('Please login to react.');
+      navigate('/login');
       return;
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const existingReaction = feeds.find(f => f._id === feedId)?.reactions
-        .find(r => r.user === user._id);
+      const feed = feeds.find(f => f._id === feedId);
+      if (!feed) return;
 
-      const res = await axios.post(
-        `http://localhost:8000/api/feed/${feedId}/react`,
-        { 
-          type: '👍',
-          action: existingReaction ? 'remove' : 'add'
-        },
-        { headers: { 'x-auth-token': token } }
+      const existingReaction = feed.reactions?.find(r => r.user === user._id);
+      const { reactions } = await api.handleReaction(
+        feedId, 
+        '👍', 
+        existingReaction ? 'remove' : 'add'
       );
 
       setFeeds(prevFeeds =>
         prevFeeds.map(feed =>
-          feed._id === feedId ? { ...feed, reactions: res.data.reactions } : feed
+          feed._id === feedId ? { ...feed, reactions } : feed
         )
       );
     } catch (err) {
-      console.error(err);
+      console.error('Error handling reaction:', err);
+      setError('Failed to update reaction. Please try again.');
     }
   };
 
-  const handlePostSubmit = async (e) => {
-    e.preventDefault();
-    if (!user) {
-      alert('Please login to create a post.');
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.post(
-        'http://localhost:8000/api/feed',
-        { content: newPostContent },
-        { headers: { 'x-auth-token': token } }
-      );
-      setNewPostContent('');
-      setFeeds(prevFeeds => [res.data, ...prevFeeds]);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handlePostClick = (feedId) => {
-    navigate(`/feed/${feedId}`);
-  };
-
-  const handleAuthorClick = (e, username) => {
-    e.stopPropagation(); // Prevent post click event from firing
-    navigate(`/profile/${username}`);
-  };
-
-  const handleDelete = async (feedId) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:8000/api/feed/${feedId}`, {
-        headers: { 'x-auth-token': token }
-      });
-      setFeeds(prevFeeds => prevFeeds.filter(feed => feed._id !== feedId));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleUpdate = async (feedId, newContent) => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.put(
-        `http://localhost:8000/api/feed/${feedId}`,
-        { content: newContent },
-        { headers: { 'x-auth-token': token } }
-      );
-      setFeeds(prevFeeds =>
-        prevFeeds.map(feed =>
-          feed._id === feedId ? res.data : feed
-        )
-      );
-      setEditingPost(null);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const toggleDropdown = (feedId) => {
-    setActiveDropdown(activeDropdown === feedId ? null : feedId);
-  };
+  if (loading) return <div className="loading-spinner">Loading...</div>;
+  if (error) return <div className="error-message">{error}</div>;
 
   return (
-    <div style={styles.feedContainer}>
-      <div style={styles.sidebar}>
-        <div style={styles.userProfile}>
+    <div className="feed-container">
+      <div className="sidebar">
+        <div className="user-profile">
           <img 
-            src={userProfile?.profileImage || '/CHURCH.jpg'} 
-            alt="Profile" 
-            style={styles.profileImage} 
+            src={api.getImageUrl(user.profileImage)}
+            alt="User Profile"
+            className="profile-image"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/default-profile.png';
+            }}
           />
-          <h3 style={styles.userName}>{userProfile?.name}</h3>
-          <p style={styles.userInfo}>@{userProfile?.username}</p>
+          <h3 className="user-name">{user.name || 'Guest'}</h3>
+          <p className="user-info">@{user.username || 'guest'}</p>
         </div>
-        <div style={styles.notificationsPane}>
-          <h3 style={styles.notificationsTitle}>
+        <div className="notifications-pane">
+          <h3 className="notifications-title">
             <Bell size={20} /> Notifications
             {notifications.length > 0 && (
-              <span style={styles.notificationCount}>{notifications.length}</span>
+              <span className="notification-count">{notifications.length}</span>
             )}
           </h3>
           {notifications.map((notification, index) => (
             <div 
               key={index} 
-              style={styles.notificationItem}
+              className="notification-item"
               onClick={() => {
                 if (notification.postId) {
                   navigate(`/feed/${notification.postId}`);
                 }
               }}
             >
-              <p style={styles.notificationContent}>{notification.content}</p>
-              <small style={styles.notificationTime}>
+              <p className="notification-content">{notification.content}</p>
+              <small className="notification-time">
                 {formatTimeElapsed(notification.createdAt)}
               </small>
             </div>
@@ -268,90 +536,109 @@ const Feed = () => {
         </div>
       </div>
 
-      <div style={styles.mainContent}>
-        <button style={styles.backHomeButton} onClick={() => navigate('/')}>
+      <div className="main-content">
+        <button className="back-home-button" onClick={() => navigate('/')}>
           Back Home
         </button>
         
-        <div style={styles.bibleVerseContainer}>
-          <div style={styles.bibleVerseScroll}>
-            <span>{bibleVerse}</span>
+        <div className="bible-verse-container">
+          <div className="bible-verse-scroll">
+            <span>{bibleVerse || 'Loading verse...'}</span>
           </div>
         </div>
 
-        <h2 style={styles.feedTitle}>Feed</h2>
+        <h2 className="feed-title">Feed</h2>
         
-        <form onSubmit={handlePostSubmit} style={styles.postForm}>
-          <textarea
-            value={newPostContent}
-            onChange={(e) => setNewPostContent(e.target.value)}
-            placeholder="What's on your mind?"
-            style={styles.postTextarea}
-          />
-          <div style={styles.postFormActions}>
-            <button 
-              type="button"
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              style={styles.emojiButton}
-            >
-              😊
-            </button>
-            {showEmojiPicker && (
-              <div style={styles.emojiPickerContainer}>
-                <Picker data={data} onEmojiSelect={onEmojiSelect} />
-              </div>
-            )}
-            <button type="submit" style={styles.postSubmitButton}>Post</button>
-          </div>
+        <form onSubmit={handlePostSubmit} className="post-form">
+          <div className="new-post">
+        <div className="emoji-button-container">
+          <button
+            onClick={() => setShowEmojiPicker((prev) => !prev)}
+            className="emoji-button"
+          >
+            😊
+          </button>
+          {showEmojiPicker && (
+            <div ref={emojiPickerRef} className="emoji-picker-container">
+              <Picker data={data} onEmojiSelect={onEmojiSelect} />
+            </div>
+          )}
+        </div>
+        <textarea
+          value={newPostContent}
+          onChange={(e) => setNewPostContent(e.target.value)}
+          placeholder="What's on your mind?"
+          className="post-textarea"
+        />
+      </div>
+          <button 
+            type="submit" 
+            className="post-submit-button"
+            disabled={!newPostContent.trim()}
+          >
+            Post
+          </button>
         </form>
 
         {feeds.map((feed) => (
-          <div key={feed._id} style={styles.feedItem}>
-            <div style={styles.feedHeader}>
-              
-              <div>
-                <h3 
-                  style={styles.authorName}
-                  onClick={(e) => handleAuthorClick(e, feed.author.username)}
-                >
-                  {feed.author.name}
-                </h3>
-                <p style={styles.feedTime}>{formatTimeElapsed(feed.createdAt)}</p>
-              </div>
-              {user && user._id === feed.author._id && (
-                <div style={styles.dropdownWrapper}>
-                  <MoreVertical 
-                    onClick={() => toggleDropdown(feed._id)}
-                    style={styles.dropdownIcon}
-                  />
-                  {activeDropdown === feed._id && (
-                    <div style={styles.dropdownMenu}>
-                      <button 
-                        style={styles.editButton}
-                        onClick={() => setEditingPost(feed)}
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        style={styles.deleteButton}
-                        onClick={() => handleDelete(feed._id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+          feed && (
+            <div key={feed._id} className="feed-item">
+              <div className="feed-header">
+                <div className="author-info">
+                  <span 
+                    className="author-name"
+                    onClick={(e) => handleAuthorClick(e, feed.user.username)}
+                    style={{ cursor: 'pointer', color: 'blue' }}
+                  >
+                    {feed.user.name || 'Unknown User'}
+                  </span>
+                  <span className="author-username">@{feed.user.username}</span>
+                  <span className="feed-time">{formatTimeElapsed(feed.createdAt)}</span>
                 </div>
-              )}
+                {user && user._id === feed.user._id && (
+                  <div className="dropdown-wrapper">
+                    <MoreVertical 
+                      onClick={() => toggleDropdown(feed._id)}
+                      className="dropdown-icon"
+                    />
+                    {activeDropdown === feed._id && (
+                      <div className="dropdown-menu">
+                        <button 
+                          className="edit-button"
+                          onClick={() => handleUpdate(feed._id, feed.content)}
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          className="delete-button"
+                          onClick={() => handleDelete(feed._id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <p onClick={() => handlePostClick(feed._id)} className="feed-content">
+                {feed.content}
+              </p>
+              <div className="reactions">
+                <button 
+                  onClick={() => handleReaction(feed._id)} 
+                  className="reaction-button"
+                >
+                  <ThumbsUp size={18} /> {feed.reactions?.length || 0}
+                </button>
+                <button 
+                  onClick={() => handlePostClick(feed._id)} 
+                  className="comment-button"
+                >
+                  <MessageCircle size={18} /> {feed.comments?.length || 0}
+                </button>
+              </div>
             </div>
-            <p onClick={() => handlePostClick(feed._id)} style={styles.feedContent}>
-              {feed.content}
-            </p>
-            <div style={styles.feedReactions}>
-              <button onClick={() => handleReaction(feed._id)} style={styles.reactionButton}>
-                👍 {feed.reactions.length}
-              </button>
-            </div>
-          </div>
+          )
         ))}
 
         {editingPost && (
@@ -364,280 +651,6 @@ const Feed = () => {
       </div>
     </div>
   );
-};
-
-const styles = {
-  feedContainer: {
-    display: 'flex',
-    backgroundColor: '#f5f5f5',
-    minHeight: '100vh',
-  },
-  sidebar: {
-    width: '300px',
-    backgroundColor: '#cbbad4',
-    padding: '20px',
-    boxShadow: '2px 0 5px rgba(0, 0, 0, 0.1)',
-  },
-  userProfile: {
-    marginBottom: '30px',
-    textAlign: 'center',
-  },
-  profileImage: {
-    width: '100px',
-    height: '100px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    marginBottom: '10px',
-  },
-  userName: {
-    color: '#a1626a',
-    marginBottom: '5px',
-  },
-  userInfo: {
-    color: '#333',
-    marginBottom: '5px',
-  },
-  notificationsPane: {
-    backgroundColor: '#ffffff',
-    borderRadius: '8px',
-    padding: '15px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  },
-  notificationsTitle: {
-    color: '#a1626a',
-    display: 'flex',
-    alignItems: 'center',
-    marginBottom: '15px',
-  },
-  notificationCount: {
-    backgroundColor: '#a1626a',
-    color: 'white',
-    borderRadius: '50%',
-    padding: '2px 6px',
-    fontSize: '0.8em',
-    marginLeft: '5px',
-  },
-  notificationItem: {
-    borderBottom: '1px solid #eee',
-    padding: '10px 0',
-    cursor: 'pointer',
-  },
-  notificationContent: {
-    margin: '0 0 5px 0',
-  },
-  notificationTime: {
-    color: '#666',
-  },
-  mainContent: {
-    flex: 1,
-    padding: '20px',
-  },
-  backHomeButton: {
-    backgroundColor: '#a1626a',
-    color: 'white',
-    border: 'none',
-    padding: '10px 15px',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    marginBottom: '20px',
-  },
-  bibleVerseContainer: {
-    backgroundColor: '#cbbad4',
-    padding: '15px',
-    borderRadius: '8px',
-    marginBottom: '20px',
-  },
-  bibleVerseScroll: {
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-  },
-  feedTitle: {
-    color: '#a1626a',
-    marginBottom: '20px',
-  },
-  inputContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    flex: 1,
-  },
-  postForm: {
-    display: 'flex',
-    marginBottom: '20px',
-  },
-  postInput: {
-    flex: 1,
-    padding: '10px',
-    borderRadius: '5px 0 0 5px',
-    border: '1px solid #ccc',
-  },
-  emojiButton: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '1.5em',
-    padding: '0 10px',
-  },
-  emojiPickerContainer: {
-    position: 'absolute',
-    zIndex: 1000,
-    top: '100%',
-    left: 0,
-  },
-  postButton: {
-    backgroundColor: '#a1626a',
-    color: 'white',
-    border: 'none',
-    padding: '10px 15px',
-    borderRadius: '0 5px 5px 0',
-    cursor: 'pointer',
-  },
-  loginPrompt: {
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  feedPost: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    padding: '15px',
-    marginBottom: '20px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  },
-  postHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '10px',
-  },
-  postUserName: {
-    fontWeight: 'bold',
-    color: '#a1626a',
-  },
-  postActions: {
-    position: 'relative',
-  },
-  threeDotsButton: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-  },
-  postActionsDropdown: {
-    position: 'absolute',
-    right: 0,
-    top: '100%',
-    backgroundColor: 'white',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    borderRadius: '5px',
-    zIndex: 1,
-  },
-  dropdownButton: {
-    display: 'block',
-    width: '100%',
-    padding: '10px',
-    textAlign: 'left',
-    border: 'none',
-    background: 'none',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: '#f5f5f5',
-    },
-  },
-  postContent: {
-    marginBottom: '15px',
-    cursor: 'pointer',
-  },
-  content: {
-    margin: 0,
-    wordBreak: 'break-word',
-  },
-  editTextarea: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '5px',
-    border: '1px solid #ccc',
-    marginBottom: '10px',
-    minHeight: '100px',
-    resize: 'vertical',
-  },
-  updateButton: {
-    backgroundColor: '#a1626a',
-    color: 'white',
-    border: 'none',
-    padding: '5px 10px',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    marginRight: '10px',
-  },
-  cancelButton: {
-    backgroundColor: '#ccc',
-    color: 'black',
-    border: 'none',
-    padding: '5px 10px',
-    borderRadius: '5px',
-    cursor: 'pointer',
-  },
-  attachments: {
-    marginTop: '10px',
-    display: 'grid',
-    gridGap: '10px',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-  },
-  attachmentImage: {
-    maxWidth: '100%',
-    borderRadius: '5px',
-    objectFit: 'cover',
-  },
-  reactionSection: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: '10px',
-    paddingTop: '10px',
-    borderTop: '1px solid #eee',
-  },
-  reactionButtons: {
-    display: 'flex',
-    gap: '10px',
-  },
-  reactionButton: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px',
-    padding: '5px 10px',
-    borderRadius: '5px',
-    '&:hover': {
-      backgroundColor: '#f5f5f5',
-    },
-  },
-  replyButton: {
-    backgroundColor: '#cbbad4',
-    color: '#a1626a',
-    border: 'none',
-    padding: '5px 10px',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: '#bca9c3',
-    },
-  },
-  authorImage: {
-    width: '50px',
-    height: '50px',
-    borderRadius: '50%',
-    marginRight: '10px',
-    cursor: 'pointer',
-  },
-  authorName: {
-    fontSize: '18px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-  },
 };
 
 export default Feed;

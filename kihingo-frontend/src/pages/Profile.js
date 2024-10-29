@@ -1,3 +1,4 @@
+// src/pages/Profile.js;
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -16,6 +17,13 @@ const Profile = () => {
     fetchUserProfile();
     fetchUserPosts();
   }, [username]);
+
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '/default-profile.png';
+    const cleanPath = imagePath.replace(/^uploads\//, '');
+    return `http://localhost:8000/uploads/${cleanPath}`;
+  };
 
   const fetchUserProfile = async () => {
     try {
@@ -62,9 +70,13 @@ const Profile = () => {
     <div className="profile-container" style={styles.container}>
       <div className="profile-header" style={styles.header}>
         <img 
-          src={user.profileImage || '/CHURCH.jpg'} 
-          alt="Profile"
-          style={styles.profileImage}
+          src={getImageUrl(user.profileImage)}
+            alt="User Profile"
+            style={styles.profileImage}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/default-profile.png';
+            }}
         />
         <h2 style={styles.name}>{user.name}</h2>
         <p style={styles.username}>@{user.username}</p>

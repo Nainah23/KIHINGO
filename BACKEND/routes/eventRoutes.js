@@ -23,28 +23,63 @@ const upload = multer({
 });
 
 // Create an event
-// Create an event
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     const { title, description, date, location } = req.body;
     
+    if (req.user.role === 'member') {
+      return res.status(403).json({ message: 'Unauthorized: Members are not allowed to create events' });
+    }
+    
+    if (!title || !description || !date || !location) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
     let imageUrl = '';
 
-    // Only upload the image if it exists
     if (req.file) {
-      const uploadResult = await new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          { folder: 'event-images' },
-          (error, result) => {
-            if (error) {
-              reject(new Error('Image upload failed'));
-            } else {
-              resolve(result.secure_url);
+      try {
+        // Add logging to debug the file
+        console.log('File details:', {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          bufferLength: req.file.buffer.length
+        });
+
+        imageUrl = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              folder: 'event-images',
+              resource_type: 'auto', // Automatically detect resource type
+              allowed_formats: ['jpg', 'png', 'jpeg'], // Specify allowed formats
+            },
+            (error, result) => {
+              if (error) {
+                console.error('Cloudinary upload error:', error);
+                reject(error);
+              } else {
+                console.log('Cloudinary upload success:', result);
+                resolve(result.secure_url);
+              }
             }
-          }
-        ).end(req.file.buffer);
-      });
-      imageUrl = uploadResult;
+          );
+
+          // Add error handler for the upload stream
+          uploadStream.on('error', (error) => {
+            console.error('Upload stream error:', error);
+            reject(error);
+          });
+
+          uploadStream.end(req.file.buffer);
+        });
+      } catch (uploadError) {
+        console.error('Detailed upload error:', uploadError);
+        return res.status(400).json({ 
+          message: 'Image upload failed', 
+          error: uploadError.message 
+        });
+      }
     }
 
     const newEvent = new Event({
@@ -57,10 +92,13 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     });
 
     const event = await newEvent.save();
-    res.json(event);
+    res.status(201).json(event);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
+    console.error('Event creation error:', err);
+    res.status(500).json({ 
+      message: 'Server Error', 
+      error: err.message 
+    });
   }
 });
 
@@ -144,7 +182,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(401).json({ msg: 'User not authorized' });
     }
 
-    await event.remove();
+    await event.deleteOne();
 
     res.json({ msg: 'Event removed' });
   } catch (err) {

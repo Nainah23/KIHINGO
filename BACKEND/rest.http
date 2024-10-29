@@ -1,8 +1,8 @@
 ### Variables
 @baseUrl = http://localhost:8000/api
-@email = "kam@gmnail.com
-@password = 2000
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcwNDE1NDVhMzhiZDc5MDc1OTk2MTU1Iiwicm9sZSI6ImFkbWluIn0sImlhdCI6MTcyODM4NDkxOSwiZXhwIjoxNzI4Mzg4NTE5fQ.uRsnGKA9egMV9Y-mNq_2TK2m0NfYlKDrNXbHDdIQbXQ
+@username = "c"
+@password = 1
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxN2M3ZDFkNjNhNmRmYzhiYTQ0N2E2Iiwicm9sZSI6Im1lbWJlciJ9LCJpYXQiOjE3MzAxNDQwODcsImV4cCI6MTczMDE0NzY4N30.noUIlaFFhbg23uvYTNAqkhmJqWWYKHCdp27bsEhztJ0
 
 ### Auth Routes
 
@@ -22,7 +22,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "naiawriters@gmail.com",
+  "username": "c",
   "password": "{{password}}"
 }
 
@@ -141,25 +141,40 @@ x-auth-token: {{token}}
 
 ### Create Event
 POST {{baseUrl}}/events
-Content-Type: multipart/form-data
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 x-auth-token: {{token}}
 
-{
-  "title": "Sunday Service",
-  "description": "Weekly Sunday service",
-  "date": "2024-12-01T09:00:00Z",
-  "location": "Main Church",
-  //"image": "@/path/to/image.jpg"
-}
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="title"
+
+Sunday Service
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="description"
+
+Weekly Sunday service
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="date"
+
+2024-12-01T09:00:00Z
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="location"
+
+Main Church
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="1728991343228.jpg"
+Content-Type: image/jpeg
+
+< ./uploads/1728991343228.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ### Get All Events
 GET {{baseUrl}}/events
 
 ### Get Single Event
-GET {{baseUrl}}/events/event_id_here
+GET {{baseUrl}}/events/67190e0c1990ae7ce8e32341
 
 ### Update Event
-PUT {{baseUrl}}/events/event_id_here
+PUT {{baseUrl}}/events/67190e0c1990ae7ce8e32341
 Content-Type: multipart/form-data
 x-auth-token: {{token}}
 
@@ -172,7 +187,7 @@ x-auth-token: {{token}}
 }
 
 ### Delete Event
-DELETE {{baseUrl}}/events/event_id_here
+DELETE {{baseUrl}}/events/67190e0c1990ae7ce8e32341
 x-auth-token: {{token}}
 
 ### Livestream Routes

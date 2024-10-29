@@ -1,3 +1,4 @@
+// src/pages/Appointments.js;
 import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import '../styles/Appointments.css';

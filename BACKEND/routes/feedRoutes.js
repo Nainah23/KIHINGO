@@ -15,8 +15,16 @@ router.post('/', authMiddleware, async (req, res) => {
       content,
       attachments
     });
+    
+    // Save the feed post
     const feed = await newFeed.save();
-    res.json(feed);
+    
+    // Populate the user details before sending the response
+    const populatedFeed = await Feed.findById(feed._id)
+      .populate('user', 'name username _id')
+      .exec();
+
+    res.json(populatedFeed);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -75,6 +83,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update a feed post
+// Update a feed post
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { content, attachments } = req.body;
@@ -92,10 +101,14 @@ router.put('/:id', authMiddleware, async (req, res) => {
     // Update the feed post
     feed.content = content;
     feed.attachments = attachments;
-
     await feed.save();
 
-    res.json(feed);
+    // Populate the user details before sending the response
+    const updatedFeed = await Feed.findById(feed._id)
+      .populate('user', 'name username _id')
+      .exec();
+
+    res.json(updatedFeed);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -124,75 +137,75 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 // In your reaction handler
 router.post('/:id/react', authMiddleware, async (req, res) => {
   try {
-    const { type } = req.body; // 'like' or emoji
-    const post = await Post.findById(req.params.id);
+    const { type, action } = req.body; // 'like' or emoji
+    const feed = await Feed.findById(req.params.id);
 
-    if (!post) return res.status(404).json({ msg: 'Post not found' });
+    if (!feed) return res.status(404).json({ msg: 'Feed post not found' });
 
     // Check if the user already reacted
-    const existingReactionIndex = post.reactions.findIndex(r => r.user.toString() === req.user.id);
+    const existingReactionIndex = feed.reactions.findIndex(r => r.user.toString() === req.user.id);
     
     if (existingReactionIndex !== -1) {
       // Remove previous reaction if it's the same type or update it
-      if (post.reactions[existingReactionIndex].type === type) {
-        post.reactions.splice(existingReactionIndex, 1); // Remove reaction
+      if (feed.reactions[existingReactionIndex].type === type) {
+        feed.reactions.splice(existingReactionIndex, 1); // Remove reaction
       } else {
-        post.reactions[existingReactionIndex].type = type; // Update to new reaction type
+        feed.reactions[existingReactionIndex].type = type; // Update to new reaction type
       }
     } else {
       // Add the new reaction
       const reaction = { user: req.user.id, type };
-      post.reactions.push(reaction);
+      feed.reactions.push(reaction);
 
       // Create notification for post owner if it's a new reaction
-      if (req.body.action === 'add' && post.user.toString() !== req.user.id) {
+      if (action === 'add' && feed.user.toString() !== req.user.id) {
         await Notification.create({
-          user: post.user,
+          user: feed.user,
           type: 'like',
-          post: post._id,
+          post: feed._id,
           creator: req.user.id
         });
       }
     }
 
-    await post.save();
-    return res.json({ reactions: post.reactions });
+    await feed.save();
+    return res.json({ reactions: feed.reactions });
   } catch (err) {
     console.error(err);
     return res.status(500).send('Server Error');
   }
 });
 
-
-// In your comment handler
+// Updated comment handler
 router.post('/:id/comment', authMiddleware, async (req, res) => {
   try {
     const { content } = req.body;
-    const post = await Post.findById(req.params.id);
+    const feed = await Feed.findById(req.params.id);
 
-    if (!post) return res.status(404).json({ msg: 'Post not found' });
+    if (!feed) return res.status(404).json({ msg: 'Feed post not found' });
 
     // Handle comment logic
     const comment = { user: req.user.id, content };
-    post.comments.push(comment);
-    await post.save();
+    feed.comments.push(comment);
+    await feed.save();
 
     // Create notification for post owner if the comment is not from them
-    if (post.user.toString() !== req.user.id) {
+    if (feed.user.toString() !== req.user.id) {
       await Notification.create({
-        user: post.user,
+        user: feed.user,
         type: 'comment',
-        post: post._id,
+        post: feed._id,
         creator: req.user.id
       });
     }
 
-    res.json(post);
+    res.json(feed);
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
+
 
 
 module.exports = router;

@@ -1,11 +1,18 @@
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background-color: #f8f9fa;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.right-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto; /* This pushes the right section to the end */
+}
   
   .logo-link {
     display: flex;
@@ -16,16 +23,36 @@
     height: 50px;
     width: auto;
   }
-  
+
   .user-greeting {
-    font-size: 1rem;
-    margin-left: 1rem;
-    color: #333;
+    position: absolute; /* Add this */
+    left: 50%; /* Add this */
+    transform: translateX(-50%); /* Add this */
+    background: linear-gradient(45deg, #ff6b6b, #feca57, #1dd1a1, #5f27cd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 28px;
+    font-weight: bold;
+    animation: colorShift 5s infinite alternate;
+}
+
+  
+  @keyframes colorShift {
+    0% {
+      filter: saturate(100%);
+    }
+    50% {
+      filter: saturate(150%);
+    }
+    100% {
+      filter: saturate(100%);
+    }
   }
   
   .user-menu {
     display: flex;
     align-items: center;
+    margin-left: auto; /* Add this */
   }
   
   .user-button {
@@ -37,7 +64,9 @@
     height: 40px;
     font-size: 1rem;
     cursor: pointer;
-  }
+    position: relative; /* Add this */
+    right: 0;          /* Add this */
+}
   
   .dropdown {
     position: relative;

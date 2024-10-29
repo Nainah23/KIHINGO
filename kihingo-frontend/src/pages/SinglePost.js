@@ -1,11 +1,12 @@
-// src/pages/SinglePost.js;
-import React, { useState, useEffect, useContext } from 'react';
+// SinglePost.js
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { Edit, Trash, MoreVertical } from 'lucide-react';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
+import '../styles/SinglePost.css';
 
 const formatTimeElapsed = (date) => {
   const now = new Date();
@@ -27,6 +28,18 @@ const formatTimeElapsed = (date) => {
 const EditPostModal = ({ post, onClose, onUpdate }) => {
   const [content, setContent] = useState(post.content);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,35 +48,36 @@ const EditPostModal = ({ post, onClose, onUpdate }) => {
   };
 
   return (
-    <div style={styles.modalOverlay}>
-      <div style={styles.modalContent}>
+    <div className="modal-overlay">
+      <div className="modal-content">
         <form onSubmit={handleSubmit}>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            style={styles.editTextarea}
+            className="edit-textarea"
           />
-          <button 
-            type="button"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            style={styles.emojiButton}
-          >
-            😊
-          </button>
-          {showEmojiPicker && (
-            <div style={styles.emojiPickerContainer}>
-              <Picker 
-                data={data} 
-                onEmojiSelect={(emoji) => {
-                  setContent(prev => prev + emoji.native);
-                  setShowEmojiPicker(false);
-                }} 
-              />
-            </div>
-          )}
-          <div style={styles.modalButtons}>
-            <button type="submit" style={styles.updateButton}>Update</button>
-            <button type="button" onClick={onClose} style={styles.cancelButton}>Cancel</button>
+          <div className="emoji-input-container">
+            <button 
+              type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="emoji-button"
+            >
+              😊
+            </button>
+            {showEmojiPicker && (
+              <div className="emoji-picker-container" ref={emojiPickerRef}>
+                <Picker 
+                  data={data} 
+                  onEmojiSelect={(emoji) => {
+                    setContent(prev => prev + emoji.native);
+                  }} 
+                />
+              </div>
+            )}
+          </div>
+          <div className="modal-buttons">
+            <button type="submit" className="update-button">Update</button>
+            <button type="button" onClick={onClose} className="cancel-button">Cancel</button>
           </div>
         </form>
       </div>
@@ -82,10 +96,24 @@ const SinglePost = () => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editedComment, setEditedComment] = useState('');
   const [isEditingPost, setIsEditingPost] = useState(false);
+  const emojiPickerRef = useRef(null);
+  const commentInputRef = useRef(null);
 
   useEffect(() => {
     fetchPost();
   }, [id]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target) &&
+          !event.target.classList.contains('emoji-button')) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchPost = async () => {
     try {
@@ -217,7 +245,7 @@ const SinglePost = () => {
   const handleCommentEdit = async (commentId, newContent) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put(
+      await axios.put(
         `http://localhost:8000/api/feed/${id}/comment/${commentId}`,
         { content: newContent },
         { headers: { 'x-auth-token': token } }
@@ -241,7 +269,6 @@ const SinglePost = () => {
 
   const onEmojiSelect = (emoji) => {
     setComment(prev => prev + emoji.native);
-    setShowEmojiPicker(false);
   };
 
   const handleUserClick = (username) => {
@@ -251,44 +278,46 @@ const SinglePost = () => {
   if (!post) return <div>Loading...</div>;
 
   return (
-    <div className="single-post-container" style={styles.container}>
-      <button className="back-button" onClick={() => navigate('/feed')} style={styles.backButton}>
+    <div className="single-post-container">
+      <button className="back-button" onClick={() => navigate('/feed')}>
         Back to Feed
       </button>
 
-      <div className="post-content" style={styles.postContent}>
-        <div style={styles.postHeader}>
-          <div style={styles.userInfo}>
+      <div className="post-content">
+        <div className="post-header">
+          <div className="user-info">
             <span 
               onClick={() => handleUserClick(post.user.username)}
-              style={styles.userName}
+              className="user-name"
             >
               {post.user.name}
             </span>
-            <span style={styles.postTime}>
+            <span className="post-time">
               {formatTimeElapsed(post.createdAt)}
             </span>
           </div>
           {user && (user._id === post.user._id || user.role === 'admin') && (
-            <div className="post-actions" style={styles.postActions}>
+            <div className="post-actions">
               <button 
                 onClick={() => setActiveDropdown(activeDropdown ? null : 'post')}
-                style={styles.actionButton}
+                className="action-button"
               >
                 <MoreVertical size={20} />
               </button>
               {activeDropdown === 'post' && (
-                <div style={styles.dropdown}>
+                <div className="dropdown">
                   <button 
                     onClick={() => setIsEditingPost(true)}
-                    style={styles.dropdownButton}
+                    className="dropdown-button"
                   >
+                    <Edit size={16} className="dropdown-icon" />
                     Edit
                   </button>
                   <button 
                     onClick={() => handleDelete(post._id)}
-                    style={styles.dropdownButton}
+                    className="dropdown-button"
                   >
+                    <Trash size={16} className="dropdown-icon" />
                     Delete
                   </button>
                 </div>
@@ -305,16 +334,16 @@ const SinglePost = () => {
           />
         ) : (
           <>
-            <p style={styles.postBody}>{post.content}</p>
+            <p className="post-body">{post.content}</p>
 
             {post.attachments && post.attachments.length > 0 && (
-              <div style={styles.attachments}>
+              <div className="attachments">
                 {post.attachments.map((attachment, index) => (
                   <img 
                     key={index} 
                     src={attachment} 
                     alt="Attachment" 
-                    style={styles.attachmentImage}
+                    className="attachment-image"
                   />
                 ))}
               </div>
@@ -322,78 +351,83 @@ const SinglePost = () => {
           </>
         )}
 
-        <div style={styles.reactionSection}>
+        <div className="reaction-section">
           <button 
             onClick={handleReaction}
-            style={styles.reactionButton}
+            className="reaction-button"
           >
             👍 {post.reactions.length}
           </button>
         </div>
 
         {user && (
-          <form onSubmit={handleCommentSubmit} style={styles.commentForm}>
-            <div style={styles.commentInputContainer}>
+          <form onSubmit={handleCommentSubmit} className="comment-form">
+            <div className="comment-input-wrapper">
+              <div className="emoji-input-container">
+                <button 
+                  type="button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="emoji-button"
+                >
+                  😊
+                </button>
+                {showEmojiPicker && (
+                  <div className="emoji-picker-container" ref={emojiPickerRef}>
+                    <Picker data={data} onEmojiSelect={onEmojiSelect} />
+                  </div>
+                )}
+              </div>
               <input
                 type="text"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Add a comment..."
-                style={styles.commentInput}
+                className="comment-input"
+                ref={commentInputRef}
               />
-              <button 
-                type="button"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                style={styles.emojiButton}
-              >
-                😊
-              </button>
             </div>
-            {showEmojiPicker && (
-              <div style={styles.emojiPickerContainer}>
-                <Picker data={data} onEmojiSelect={onEmojiSelect} />
-              </div>
-            )}
-            <button type="submit" style={styles.submitButton}>
+            <button type="submit" className="submit-button">
               Comment
             </button>
           </form>
         )}
 
-        <div style={styles.commentsSection}>
+        <div className="comments-section">
           <h3>Comments</h3>
           {post.comments.map((comment) => (
-            <div key={comment._id} style={styles.comment}>
-              <div style={styles.commentHeader}>
+            <div key={comment._id} className="comment">
+              <div className="comment-header">
                 <span 
                   onClick={() => handleUserClick(comment.user.username)}
-                  style={styles.commentUserName}
+                  className="comment-user-name"
                 >
                   {comment.user.name}
                 </span>
                 {user && (user._id === comment.user._id || user.role === 'admin') && (
-                  <div style={styles.commentActions}>
+                  <div className="comment-actions">
                     <button 
                       onClick={() => setActiveDropdown(activeDropdown === comment._id ? null : comment._id)}
-                      style={styles.actionButton}
+                      className="action-button"
                     >
                       <MoreVertical size={16} />
                     </button>
                     {activeDropdown === comment._id && (
-                      <div style={styles.dropdown}>
+                      <div className="dropdown">
                         <button 
                           onClick={() => {
                             setEditingCommentId(comment._id);
                             setEditedComment(comment.content);
                           }}
-                          style={styles.dropdownButton}
+                          className="dropdown-button"
                         >
+                          <Edit size={16} className="dropdown-icon" />
                           Edit
                         </button>
                         <button 
                           onClick={() => handleCommentDelete(comment._id)}
-                          style={styles.dropdownButton}
+                          className="dropdown-button"
                         >
+                          <Trash size={16} className="dropdown-icon" />
                           Delete
                         </button>
                       </div>
@@ -402,17 +436,17 @@ const SinglePost = () => {
                 )}
               </div>
               {editingCommentId === comment._id ? (
-                <div style={styles.editCommentForm}>
+                <div className="edit-comment-form">
                   <input
                     type="text"
                     value={editedComment}
                     onChange={(e) => setEditedComment(e.target.value)}
-                    style={styles.editCommentInput}
+                    className="edit-comment-input"
                   />
-                  <div style={styles.editCommentButtons}>
+                  <div className="edit-comment-buttons">
                     <button 
                       onClick={() => handleCommentEdit(comment._id, editedComment)}
-                      style={styles.editButton}
+                      className="edit-button"
                     >
                       Save
                     </button>
@@ -421,216 +455,24 @@ const SinglePost = () => {
                         setEditingCommentId(null);
                         setEditedComment('');
                       }}
-                      style={styles.cancelButton}
+                      className="cancel-button"
                     >
                       Cancel
                     </button>
                   </div>
                 </div>
               ) : (
-                <p style={styles.commentContent}>{comment.content}</p>
+                <p className="comment-content">{comment.content}</p>
               )}
-              <span style={styles.commentTime}>
+              <span className="comment-time">
                 {formatTimeElapsed(comment.createdAt)}
               </span>
             </div>
           ))}
-        </div>
+          </div>
       </div>
     </div>
   );
 };
-
-
-const styles = {
-  container: {
-    maxWidth: '800px',
-    margin: '0 auto',
-    padding: '20px',
-  },
-  backButton: {
-    backgroundColor: '#a1626a',
-    color: 'white',
-    border: 'none',
-    padding: '10px 20px',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    marginBottom: '20px',
-  },
-  postContent: {
-    backgroundColor: 'white',
-    borderRadius: '10px',
-    padding: '20px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  },
-  postHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '15px',
-  },
-  userInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  userName: {
-    color: '#a1626a',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-  },
-  postTime: {
-    color: '#666',
-    fontSize: '0.9em',
-  },
-  postActions: {
-    position: 'relative',
-  },
-  actionButton: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '5px',
-  },
-  dropdown: {
-    position: 'absolute',
-    right: 0,
-    top: '100%',
-    backgroundColor: 'white',
-    borderRadius: '5px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    zIndex: 1000,
-  },
-  dropdownButton: {
-    display: 'block',
-    width: '100%',
-    padding: '10px 20px',
-    border: 'none',
-    background: 'none',
-    cursor: 'pointer',
-    textAlign: 'left',
-    color: '#333',
-  },
-  postBody: {
-    marginBottom: '20px',
-    lineHeight: '1.5',
-  },
-  attachments: {
-    marginBottom: '20px',
-  },
-  attachmentImage: {
-    maxWidth: '100%',
-    borderRadius: '5px',
-    marginBottom: '10px',
-  },
-  reactionSection: {
-    borderTop: '1px solid #eee',
-    borderBottom: '1px solid #eee',
-    padding: '10px 0',
-    marginBottom: '20px',
-  },
-  reactionButton: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '1.2em',
-  },
-  commentForm: {
-    marginBottom: '20px',
-  },
-  commentInputContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    marginBottom: '10px',
-  },
-  commentInput: {
-    flex: 1,
-    padding: '10px',
-    borderRadius: '5px',
-    border: '1px solid #ccc',
-  },
-  emojiButton: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '1.5em',
-    padding: '0 10px',
-  },
-  emojiPickerContainer: {
-    position: 'absolute',
-    zIndex: 1000,
-  },
-  submitButton: {
-    backgroundColor: '#a1626a',
-    color: 'white',
-    border: 'none',
-    padding: '10px 20px',
-    borderRadius: '5px',
-    cursor: 'pointer',
-  },
-  commentsSection: {
-    marginTop: '20px',
-  },
-  comment: {
-    borderBottom: '1px solid #eee',
-    padding: '15px 0',
-  },
-  commentHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '5px',
-  },
-  commentUserName: {
-    color: '#a1626a',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-  },
-  commentActions: {
-    position: 'relative',
-  },
-  commentContent: {
-    marginBottom: '5px',
-  },
-  commentTime: {
-    color: '#666',
-    fontSize: '0.9em',
-  },
-  editCommentForm: {
-    marginTop: '10px',
-  },
-  editCommentInput: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '5px',
-    border: '1px solid #ccc',
-    marginBottom: '10px',
-  },
-  editCommentButtons: {
-      display: 'flex',
-      gap: '10px',
-    },
-    editButton: {
-      backgroundColor: '#a1626a',
-      color: 'white',
-      border: 'none',
-      padding: '8px 16px',
-      borderRadius: '5px',
-      cursor: 'pointer',
-      '&:hover': {
-        backgroundColor: '#8d5459',
-      },
-    },
-    cancelButton: {
-      backgroundColor: '#6c757d',
-      color: 'white',
-      border: 'none',
-      padding: '8px 16px',
-      borderRadius: '5px',
-      cursor: 'pointer',
-      '&:hover': {
-        backgroundColor: '#5a6268',
-      },
-    }
-  };
 
 export default SinglePost;
