@@ -18,7 +18,7 @@
 }
 
 .bible-verse-scroll {
-  background-color: #cbbad4;
+  /*background-color: #cbbad4; */
   color: rgb(215, 100, 12);
   padding: 10px;
   font-weight: bold;
@@ -563,4 +563,54 @@ nav-bar {
   .slide-content p {
     font-size: 1em;
   }
+}
+
+
+/* Keep existing info-card styles and add these new styles */
+.feed-card {
+  color: white;
+  position: relative;
+  overflow: hidden;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  padding: 2rem;
+}
+
+
+.feed-card h2 {
+  color: white;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.feed-card p {
+  color: white;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.feed-content {
+  z-index: 1;
+}
+
+.feed-button {
+  display: inline-block;
+  background-color: #e74c3c;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.feed-button:hover {
+  background-color: transparent;
+  border-color: white;
+  transform: translateY(-2px);
 }

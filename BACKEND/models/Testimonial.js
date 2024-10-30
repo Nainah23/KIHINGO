@@ -4,7 +4,8 @@ const mongoose = require('mongoose');
 const ReactionSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    required: true
   },
   type: {
     type: String,
@@ -15,7 +16,8 @@ const ReactionSchema = new mongoose.Schema({
 const CommentSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    required: true
   },
   content: String,
   createdAt: {

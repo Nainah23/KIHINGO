@@ -83,7 +83,6 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update a feed post
-// Update a feed post
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { content, attachments } = req.body;

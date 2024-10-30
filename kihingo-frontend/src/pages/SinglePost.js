@@ -117,7 +117,7 @@ const SinglePost = () => {
 
   const fetchPost = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/feed/${id}`);
+      const res = await axios.get(`http://localhost:8000/api/feed/${id}?sort=-createdAt`);
       setPost(res.data);
     } catch (err) {
       console.error(err);
@@ -293,13 +293,13 @@ const SinglePost = () => {
         <div className="post-header">
           <div className="user-info">
             <span className="author-name">{post.user.name}</span>
-          <span 
-          className="author-username"
-          onClick={(e) => handleUserClick(e, post.user.username)}
-          style={{ cursor: 'pointer' }}
-        >
-          @{post.user.username}
-        </span>
+            <span 
+              className="author-username"
+              onClick={(e) => handleUserClick(e, post.user.username)}
+              style={{ cursor: 'pointer' }}
+            >
+              @{post.user.username}
+            </span>
             <span className="post-time">
               {formatTimeElapsed(post.createdAt)}
             </span>
@@ -407,78 +407,76 @@ const SinglePost = () => {
               <div className="comment-header">
                 <span className="comment-user-name">{comment.user.name}</span>
                 <span 
+                  className="comment-user-username"
                   onClick={(e) => handleUserClick(e, comment.user.username)}
-                  className="comment-user-name"
+                  style={{ display: 'block', cursor: 'pointer', color: 'gray' }}
                 >
                   @{comment.user.username}
                 </span>
-                {user && (user._id === comment.user._id || user.role === 'admin') && (
-                  <div className="comment-actions">
-                    <button 
-                      onClick={() => setActiveDropdown(activeDropdown === comment._id ? null : comment._id)}
-                      className="action-button"
-                    >
-                      <MoreVertical size={16} />
-                    </button>
-                    {activeDropdown === comment._id && (
-                      <div className="dropdown">
-                        <button 
-                          onClick={() => {
-                            setEditingCommentId(comment._id);
-                            setEditedComment(comment.content);
-                          }}
-                          className="dropdown-button"
-                        >
-                          <Edit size={16} className="dropdown-icon" />
-                          Edit
-                        </button>
-                        <button 
-                          onClick={() => handleCommentDelete(comment._id)}
-                          className="dropdown-button"
-                        >
-                          <Trash size={16} className="dropdown-icon" />
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
-              {editingCommentId === comment._id ? (
-                <div className="edit-comment-form">
-                  <input
-                    type="text"
-                    value={editedComment}
-                    onChange={(e) => setEditedComment(e.target.value)}
-                    className="edit-comment-input"
-                  />
-                  <div className="edit-comment-buttons">
-                    <button 
-                      onClick={() => handleCommentEdit(comment._id, editedComment)}
-                      className="edit-button"
-                    >
-                      Save
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setEditingCommentId(null);
-                        setEditedComment('');
-                      }}
-                      className="cancel-button"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+              <span className="comment-time">{formatTimeElapsed(comment.createdAt)}</span>
+              {user && (user._id === comment.user._id || user.role === 'admin') && (
+                <div className="comment-actions">
+                  <button 
+                    onClick={() => setActiveDropdown(activeDropdown === comment._id ? null : comment._id)}
+                    className="action-button"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                  {activeDropdown === comment._id && (
+                    <div className="dropdown">
+                      <button 
+                        onClick={() => {
+                          setEditingCommentId(comment._id);
+                          setEditedComment(comment.content);
+                        }}
+                        className="dropdown-button"
+                      >
+                        <Edit size={16} className="dropdown-icon" />
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => handleCommentDelete(comment._id)}
+                        className="dropdown-button"
+                      >
+                        <Trash size={16} className="dropdown-icon" />
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <p className="comment-content">{comment.content}</p>
               )}
-              <span className="comment-time">
-                {formatTimeElapsed(comment.createdAt)}
-              </span>
             </div>
           ))}
-          </div>
+
+          {editingCommentId !== null && (
+            <div className="edit-comment-form">
+              <input
+                type="text"
+                value={editedComment}
+                onChange={(e) => setEditedComment(e.target.value)}
+                className="edit-comment-input"
+              />
+              <div className="edit-comment-buttons">
+                <button 
+                  onClick={() => handleCommentEdit(editingCommentId, editedComment)}
+                  className="edit-button"
+                >
+                  Save
+                </button>
+                <button 
+                  onClick={() => {
+                    setEditingCommentId(null);
+                    setEditedComment('');
+                  }}
+                  className="cancel-button"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

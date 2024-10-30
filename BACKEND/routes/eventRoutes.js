@@ -35,24 +35,28 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
+    // Validate date format (YYYY-MM-DD)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD' });
+    }
+    
     let imageUrl = '';
-
+    
     if (req.file) {
       try {
-        // Add logging to debug the file
         console.log('File details:', {
           originalname: req.file.originalname,
           mimetype: req.file.mimetype,
           size: req.file.size,
           bufferLength: req.file.buffer.length
         });
-
+        
         imageUrl = await new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
             {
               folder: 'event-images',
-              resource_type: 'auto', // Automatically detect resource type
-              allowed_formats: ['jpg', 'png', 'jpeg'], // Specify allowed formats
+              resource_type: 'auto',
+              allowed_formats: ['jpg', 'png', 'jpeg'],
             },
             (error, result) => {
               if (error) {
@@ -64,20 +68,19 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
               }
             }
           );
-
-          // Add error handler for the upload stream
+          
           uploadStream.on('error', (error) => {
             console.error('Upload stream error:', error);
             reject(error);
           });
-
+          
           uploadStream.end(req.file.buffer);
         });
       } catch (uploadError) {
         console.error('Detailed upload error:', uploadError);
-        return res.status(400).json({ 
-          message: 'Image upload failed', 
-          error: uploadError.message 
+        return res.status(400).json({
+          message: 'Image upload failed',
+          error: uploadError.message
         });
       }
     }
@@ -85,7 +88,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     const newEvent = new Event({
       title,
       description,
-      date,
+      date, // Store date as string in YYYY-MM-DD format
       location,
       imageUrl,
       createdBy: req.user.id
@@ -95,13 +98,12 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     res.status(201).json(event);
   } catch (err) {
     console.error('Event creation error:', err);
-    res.status(500).json({ 
-      message: 'Server Error', 
-      error: err.message 
+    res.status(500).json({
+      message: 'Server Error',
+      error: err.message
     });
   }
 });
-
 
 // Get all events
 router.get('/', async (req, res) => {

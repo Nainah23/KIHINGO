@@ -114,7 +114,7 @@
 }
 
 .post-textarea {
-  width: 100%; /* Makes it take up full width of its container */
+  width: 400%; /* Makes it take up full width of its container */
   padding: 15px; /* Adds extra padding for more comfortable typing */
   border-radius: 8px; /* Slightly more rounded corners for a softer look */
   border: 1px solid #ccc;
@@ -152,6 +152,17 @@
 .post-submit-button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+.feed-title {
+  background: linear-gradient(45deg, #ff6b6b, #feca57, #1dd1a1, #5f27cd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+  animation: colorShift 5s infinite alternate;
 }
 
 /* Feed Items */

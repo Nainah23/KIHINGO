@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
+import '../styles/Events.css';
 import { ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
 
 const backgroundImages = [
@@ -22,6 +23,27 @@ export default function Events() {
   const navigate = useNavigate();
   const scrollCount = useRef(0);
   const verseRef = useRef(null);
+
+  const getImageUrl = (image) => {
+    if (!image) return '/default-event.png';
+    if (typeof image === 'string' && (image.startsWith('http://') || image.startsWith('https://'))) {
+      return image;
+    }
+    if (typeof image === 'string' && image.startsWith('uploads/')) {
+      const cleanPath = image.replace(/^uploads\//, '');
+      return `http://localhost:8000/uploads/${cleanPath}`;
+    }
+    return image.imageUrl || image;
+  };
+
+  const formatDateForDisplay = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   const fetchEvents = async () => {
     try {
@@ -69,13 +91,21 @@ export default function Events() {
 
   const handleEdit = async (eventId, updatedEventData = {}) => {
     try {
+      const formData = new FormData();
+      Object.entries(updatedEventData).forEach(([key, value]) => {
+        if (key === 'date') {
+          formData.append(key, value); // Date is already in YYYY-MM-DD format
+        } else {
+          formData.append(key, value);
+        }
+      });
+
       const response = await fetch(`http://localhost:8000/api/events/${eventId}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'x-auth-token': localStorage.getItem('token')
         },
-        body: JSON.stringify(updatedEventData),
+        body: formData,
       });
 
       if (response.ok) {
@@ -120,8 +150,11 @@ export default function Events() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
+    
     Object.entries(newEvent).forEach(([key, value]) => {
-      formData.append(key, value);
+      if (value !== null) {
+        formData.append(key, value);
+      }
     });
 
     try {
@@ -134,8 +167,10 @@ export default function Events() {
       });
 
       if (res.ok) {
-        setNewEvent({ title: '', description: '', date: '', location: '', image: null }); // Reset form
-        fetchEvents(); // Refresh events
+        const createdEvent = await res.json();
+        setEvents(prevEvents => [...prevEvents, createdEvent]);
+        setNewEvent({ title: '', description: '', date: '', location: '', image: null });
+        setShowEventForm(false);
       } else {
         console.error('Error creating event:', res.statusText);
       }
@@ -186,7 +221,10 @@ export default function Events() {
             style={{
               backgroundImage: `url(${img})`,
               backgroundSize: 'cover',
-              backgroundPosition: 'center'
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              width: '100%',
+              height: '100%'
             }}
           />
         ))}
@@ -229,13 +267,14 @@ export default function Events() {
         <div className="col-span-1 bg-white rounded-lg shadow-lg p-6 profile-section">
           <div className="flex flex-col items-center">
             <img
-              src={user?.profileImage ? `http://localhost:8000/uploads/${user.profileImage}` : '/default-profile.png'}
+              src={getImageUrl(user?.profileImage)}
               alt="Profile"
               className="w-32 h-32 rounded-full object-cover border-4 border-purple-500"
             />
             <h3 className="mt-4 text-xl font-semibold text-gray-800">
-              {user?.username || 'Guest'}
+              {user?.name || 'Guest'}
             </h3>
+            <p>{user?.username}</p>
           </div>
         </div>
 
@@ -303,7 +342,7 @@ export default function Events() {
             </form>
           )}
 
-          <h2 className="text-2xl font-semibold mb-4">Upcoming Events</h2>
+          <h2 className="gradient-heading">Upcoming Events</h2>
           {events.length === 0 ? (
             <p>No events found.</p>
           ) : (
@@ -311,9 +350,21 @@ export default function Events() {
               <div key={event._id} className="mb-4 p-4 bg-white rounded shadow-md">
                 <h3 className="text-xl font-bold">{event.title}</h3>
                 <p>{event.description}</p>
-                <p>{new Date(event.date).toLocaleString()}</p>
-                <p>{event.location}</p>
-                <img src={`http://localhost:8000/uploads/${event.image}`} alt={event.title} className="w-full h-48 object-cover" />
+                <p>{formatDateForDisplay(event.date)}</p>
+                <p>Location: {event.location}</p>
+                {(event.image || event.imageUrl) && (
+                  <div className="w-32 h-32 object-cover border-4 border-purple-500">
+                    <img 
+                      src={getImageUrl(event.imageUrl || event.image)} 
+                      alt={event.title} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/default-event.png';
+                      }}
+                    />
+                  </div>
+                )}
                 {user?.role && (
                   <div className="flex justify-between mt-2">
                     <button

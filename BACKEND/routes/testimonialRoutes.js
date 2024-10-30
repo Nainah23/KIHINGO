@@ -13,7 +13,8 @@ router.post('/', authMiddleware, async (req, res) => {
     });
 
     const testimonial = await newTestimonial.save();
-    res.json(testimonial);
+    const populatedTestimonial = await Testimonial.findById(testimonial._id).populate('user', 'name username').exec();
+    res.json(populatedTestimonial);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -23,8 +24,22 @@ router.post('/', authMiddleware, async (req, res) => {
 // Get all testimonials
 router.get('/', async (req, res) => {
   try {
-    const testimonials = await Testimonial.find().sort({ createdAt: -1 }).populate('user', 'name');
+    const testimonials = await Testimonial.find().sort({ createdAt: -1 }).populate('user', 'name username');
     res.json(testimonials);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Get a single testimonial
+router.get('/:id', async (req, res) => {
+  try {
+    const testimonial = await Testimonial.findById(req.params.id).populate('user', 'name username').populate('comments.user', 'name username').exec();
+    if (!testimonial) {
+      return res.status(404).json({ msg: 'Testimonial not found' });
+    }
+    res.json(testimonial);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -48,6 +63,60 @@ router.post('/:id/react', authMiddleware, async (req, res) => {
     await testimonial.save();
 
     res.json(testimonial.reactions);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+// Update testimonial
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    if (!req.params.id) {
+      return res.status(400).json({ msg: 'Invalid testimonial ID' });
+    }
+
+    const testimonial = await Testimonial.findById(req.params.id);
+    if (!testimonial) {
+      return res.status(404).json({ msg: 'Testimonial not found' });
+    }
+
+    // Check if the user is authorized to update the testimonial
+    if (testimonial.user.toString() !== req.user.id) {
+      return res.status(401).json({ msg: 'User not authorized' });
+    }
+
+    // Update content and save
+    testimonial.content = req.body.content;
+    await testimonial.save();
+
+    // Fetch updated testimonial with populated user data
+    const updatedTestimonial = await Testimonial.findById(testimonial._id).populate('user', 'name username').exec();
+    res.json(updatedTestimonial);
+
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+
+// Delete Testimonial
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const testimonial = await Testimonial.findById(req.params.id);
+    if (!testimonial) {
+      return res.status(404).json({ msg: 'Testimonial not found' });
+    }
+
+    if (testimonial.user.toString() !== req.user.id) {
+      return res.status(401).json({ msg: 'User not authorized' });
+    }
+
+    await testimonial.deleteOne();
+    res.json({ msg: 'Testimonial removed' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');

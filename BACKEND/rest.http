@@ -1,8 +1,8 @@
 ### Variables
 @baseUrl = http://localhost:8000/api
-@username = "c"
+@username = "e"
 @password = 1
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxN2M3ZDFkNjNhNmRmYzhiYTQ0N2E2Iiwicm9sZSI6Im1lbWJlciJ9LCJpYXQiOjE3MzAyODM4MjksImV4cCI6MTczMDI4NzQyOX0.qgvEo98Ibh5py-T8_RBEJk9ZNTlN3BFz5wxw5017Kw0
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxOTI3YTEzMDdlNmI0YmVjODAzZTNiIiwicm9sZSI6InJldmVyZW5kIn0sImlhdCI6MTczMDMxNjc5MywiZXhwIjoxNzMwMzIwMzkzfQ.ERwmHikAKwW4fSWhqWkNzDSM-Oh3N0oKAa4-5B4ozCw
 
 ### Auth Routes
 
@@ -22,7 +22,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "username": "c",
+  "username": "e",
   "password": "{{password}}"
 }
 
@@ -73,6 +73,15 @@ x-auth-token: {{token}}
   "content": "Another test testimonial"
 }
 
+### Update Testimonial
+PUT {{baseUrl}}/testimonials/672264b83b27b35c4ab498b6
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+  "content": "Updated testimonial content"
+}
+
 ### Get All Testimonials
 GET {{baseUrl}}/testimonials
 
@@ -86,12 +95,12 @@ x-auth-token: {{token}}
 }
 
 ### Add Comment to Testimonial
-POST {{baseUrl}}/testimonials/670413a9a38bd79075996141/comment
+POST {{baseUrl}}/testimonials/672264b83b27b35c4ab498b6/comment
 Content-Type: application/json
 x-auth-token: {{token}}
 
 {
-  "content": "This is a test comment"
+  "content": "This is a test"
 }
 
 ### Appointment Routes

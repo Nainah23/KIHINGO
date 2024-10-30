@@ -192,10 +192,16 @@ const Home = () => {
         </section>
 
         <section className="info-grid">
-          <div className="info-card">
-            <h2>Our Church</h2>
-            <img src="/kihi.jpg" alt="Our Church" />
-            <Link to="/about" className="learn-more">Learn More</Link>
+          <div className="info-card feed-card">
+            <img src="/Events3.jpg" alt="Church Community" className="feed-background" />
+            <div className="feed-overlay"></div>
+            <div className="feed-content">
+              <h2>Church Feed</h2>
+              <p>Stay connected with our vibrant church community! Join conversations, share your faith journey, and get inspired by fellow believers' stories.</p>
+              <Link to="/feed" className="feed-button">
+                Join the Conversation
+              </Link>
+            </div>
           </div>
           <div className="info-card">
             <h2>Testimonials</h2>
@@ -211,7 +217,6 @@ const Home = () => {
 
         <section className="join-story-section">
           <div className="church-groups-section">
-            <h2>Our Church Groups</h2>
             <div className="church-groups-slider">
               <button className="slider-button prev" onClick={prevSlide}>
                 <FaChevronLeft />

@@ -650,7 +650,7 @@ const Feed = () => {
           </div>
         </div>
   
-        <h2 className="feed-title">Feed</h2>
+        <h2 className="feed-title">Church Feed</h2>
   
         {renderPostForm()}
   
