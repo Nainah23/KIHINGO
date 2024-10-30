@@ -1,4 +1,4 @@
-// src/pages/Feed.js;
+
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../contexts/AuthContext';
@@ -8,7 +8,7 @@ import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 import '../styles/Feed.css';
 
-// Move utility functions outside component
+// Utility functions
 const formatTimeElapsed = (date) => {
   if (!date) return '';
   const now = new Date();
@@ -27,10 +27,11 @@ const formatTimeElapsed = (date) => {
   return posted.toLocaleDateString();
 };
 
-// API service class instead of object
+// API service class
 class ApiService {
   constructor(navigate) {
     this.navigate = navigate;
+    this.baseUrl = 'http://localhost:8000';
   }
 
   getHeaders() {
@@ -47,20 +48,50 @@ class ApiService {
     };
   }
 
+  async getImageUrl(imagePath) {
+    if (!imagePath) return '/default-profile.png';
+    const cleanPath = imagePath.replace(/^uploads\//, '');
+    return `${this.baseUrl}/uploads/${cleanPath}`;
+  }
+
   async fetchFeeds() {
     try {
-      const response = await axios.get('http://localhost:8000/api/feed');
-      return response.data;
+      const { data: feeds } = await axios.get(`${this.baseUrl}/api/feed`, this.getHeaders());
+      
+      // Fetch complete user details for each feed
+      const feedsWithUserDetails = await Promise.all(
+        feeds.map(async (feed) => {
+          try {
+            if (!feed.user?.username) {
+              console.warn(`No username found for feed ${feed._id}`);
+              return feed;
+            }
+
+            const { data: userDetails } = await axios.get(
+              `${this.baseUrl}/api/auth/profile/${feed.user.username}`,
+              this.getHeaders()
+            );
+            
+            return {
+              ...feed,
+              user: {
+                ...feed.user,
+                ...userDetails,
+                profileImage: await this.getImageUrl(userDetails.profileImage)
+              }
+            };
+          } catch (err) {
+            console.error(`Error fetching user details for feed ${feed._id}:`, err);
+            return feed;
+          }
+        })
+      );
+      
+      return feedsWithUserDetails;
     } catch (error) {
       this.handleApiError(error);
       throw error;
     }
-  }
-
-  async getImageUrl(imagePath) {
-    if (!imagePath) return '/default-profile.png';
-    const cleanPath = imagePath.replace(/^uploads\//, '');
-    return `http://localhost:8000/uploads/${cleanPath}`;
   }
 
   async fetchUserProfile(username) {
@@ -110,49 +141,54 @@ class ApiService {
 
   async createPost(content) {
     try {
-      const config = this.getHeaders();
-      const response = await axios.post(
-        `http://localhost:8000/api/feed`,
+      const { data: newPost } = await axios.post(
+        `${this.baseUrl}/api/feed`,
         { content },
-        config
+        this.getHeaders()
       );
       
-      // Ensure we have the complete user details in the response
-      const postWithUser = {
-        ...response.data,
+      // Fetch complete user details for the new post
+      const { data: userDetails } = await axios.get(
+        `${this.baseUrl}/api/auth/profile/${newPost.user.username}`,
+        this.getHeaders()
+      );
+      
+      return {
+        ...newPost,
         user: {
-          _id: response.data.user || response.data.user._id,
-          name: response.data.user.name || '',
-          username: response.data.user.username || ''
+          ...newPost.user,
+          ...userDetails,
+          profileImage: await this.getImageUrl(userDetails.profileImage)
         }
       };
-
-      return postWithUser;
     } catch (error) {
       this.handleApiError(error);
-      throw new Error('Failed to create post');
+      throw error;
     }
   }
 
   async updatePost(postId, content) {
     try {
-      const response = await axios.put(
-        `http://localhost:8000/api/feed/${postId}`,
+      const { data: updatedPost } = await axios.put(
+        `${this.baseUrl}/api/feed/${postId}`,
         { content },
         this.getHeaders()
       );
-  
-      // Ensure we have the complete user details in the response
-      const postWithUser = {
-        ...response.data,
+      
+      // Fetch complete user details for the updated post
+      const { data: userDetails } = await axios.get(
+        `${this.baseUrl}/api/auth/profile/${updatedPost.user.username}`,
+        this.getHeaders()
+      );
+      
+      return {
+        ...updatedPost,
         user: {
-          _id: response.data.user._id,
-          name: response.data.user.name,
-          username: response.data.user.username
+          ...updatedPost.user,
+          ...userDetails,
+          profileImage: await this.getImageUrl(userDetails.profileImage)
         }
       };
-  
-      return postWithUser;
     } catch (error) {
       this.handleApiError(error);
       throw error;
@@ -162,7 +198,7 @@ class ApiService {
   async deletePost(postId) {
     try {
       await axios.delete(
-        `http://localhost:8000/api/feed/${postId}`,
+        `${this.baseUrl}/api/feed/${postId}`,
         this.getHeaders()
       );
     } catch (error) {
@@ -173,12 +209,12 @@ class ApiService {
 
   async handleReaction(feedId, type, action) {
     try {
-      const response = await axios.post(
-        `http://localhost:8000/api/feed/${feedId}/react`,
+      const { data } = await axios.post(
+        `${this.baseUrl}/api/feed/${feedId}/react`,
         { type, action },
         this.getHeaders()
       );
-      return response.data;
+      return data;
     } catch (error) {
       this.handleApiError(error);
       throw error;
@@ -194,6 +230,7 @@ class ApiService {
   }
 }
 
+// EditPostModal Component
 const EditPostModal = ({ post, onClose, onUpdate }) => {
   const [content, setContent] = useState(post?.content || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -265,40 +302,35 @@ const EditPostModal = ({ post, onClose, onUpdate }) => {
   );
 };
 
+// Main Feed Component
 const Feed = () => {
   const { user } = useContext(AuthContext);
   const [feeds, setFeeds] = useState([]);
   const [newPostContent, setNewPostContent] = useState('');
   const [bibleVerse, setBibleVerse] = useState('');
   const [editingPost, setEditingPost] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userProfileImage, setUserProfileImage] = useState('/default-profile.png');
+  
   const navigate = useNavigate();
   const timeUpdateInterval = useRef(null);
   const emojiPickerRef = useRef(null);
   const api = React.useMemo(() => new ApiService(navigate), [navigate]);
 
-
-  // Handler functions
-  const handleAuthorClick = async (e, username) => {
+  const handleAuthorClick = (e, username) => {
     e.preventDefault();
     e.stopPropagation();
-  
     if (username) {
-      try {
-        const userProfile = await api.fetchUserProfile(username);
-        const userId = userProfile._id; // assuming user profile contains `_id`
-        navigate(`/profile/${userId}`);
-      } catch (error) {
-        console.error("Failed to navigate to user profile:", error);
-      }
+      navigate(`/profile/${username}`);
+    } else {
+      console.warn('No username provided for profile navigation');
     }
-  };  
+  };
 
   const handlePostClick = (postId) => {
     navigate(`/feed/${postId}`);
@@ -329,58 +361,21 @@ const Feed = () => {
         setLoading(true);
         setError(null);
 
-        if (!user) {
-          const token = localStorage.getItem('token');
-          if (!token) {
-            navigate('/login');
-            return;
-          }
-
-          try {
-            const res = await axios.get('http://localhost:8000/api/auth/user', {
-              headers: { 'x-auth-token': token }
-            });
-            if (!res.data) {
-              navigate('/login');
-              return;
-            }
-          } catch (err) {
-            localStorage.removeItem('token');
-            navigate('/login');
-            return;
-          }
+        // Load user profile image
+        if (user?.profileImage) {
+          const imageUrl = await api.getImageUrl(user.profileImage);
+          setUserProfileImage(imageUrl);
         }
 
-        // Load all data in parallel
-        const [feedsData, notificationsData, verseData, profileData] = await Promise.all([
+        const [feedsData, notificationsData, verseData] = await Promise.all([
           api.fetchFeeds(),
           api.fetchNotifications().catch(() => []),
-          api.fetchBibleVerse().catch(() => ''),
-          user ? api.fetchUserProfile(user.username).catch(() => null) : null
+          api.fetchBibleVerse().catch(() => '')
         ]);
 
-        // Ensure each feed has complete user details
-        const feedsWithUserDetails = await Promise.all(
-          feedsData.map(async (feed) => {
-            try {
-              const userDetails = await api.fetchUserProfile(feed.user.username);
-              return {
-                ...feed,
-                user: {
-                  ...feed.user,
-                  ...userDetails
-                }
-              };
-            } catch (err) {
-              return feed;
-            }
-          })
-        );
-
-        setFeeds(feedsWithUserDetails);
+        setFeeds(feedsData);
         setNotifications(notificationsData);
         setBibleVerse(verseData);
-        setUserProfile(profileData);
 
       } catch (err) {
         setError('Failed to load feed data. Please try refreshing the page.');
@@ -499,7 +494,7 @@ const Feed = () => {
       <div className="sidebar">
         <div className="user-profile">
           <img 
-            src={api.getImageUrl(user.profileImage)}
+            src={userProfileImage}
             alt="User Profile"
             className="profile-image"
             onError={(e) => {
@@ -534,10 +529,10 @@ const Feed = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div>      
 
       <div className="main-content">
-        <button className="back-home-button" onClick={() => navigate('/')}>
+      <button className="back-home-button" onClick={() => navigate('/')}>
           Back Home
         </button>
         
@@ -587,10 +582,10 @@ const Feed = () => {
                 <div className="author-info">
                   <span 
                     className="author-name"
-                    onClick={(e) => handleAuthorClick(e, feed.user.username)}
-                    style={{ cursor: 'pointer', color: 'blue' }}
+                    onClick={(e) => handleAuthorClick(e, feed.user._id)}
+                    style={{ cursor: 'pointer' }}
                   >
-                    {feed.user.name || 'Unknown User'}
+                    {feed.user.name}
                   </span>
                   <span className="author-username">@{feed.user.username}</span>
                   <span className="feed-time">{formatTimeElapsed(feed.createdAt)}</span>
