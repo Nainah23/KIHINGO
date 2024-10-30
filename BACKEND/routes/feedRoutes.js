@@ -53,7 +53,7 @@ router.get('/user/:username', async (req, res) => {
 // Get all feed posts
 router.get('/', async (req, res) => {
   try {
-    const feeds = await Feed.find().sort({ createdAt: -1 }).populate('user', 'name');
+    const feeds = await Feed.find().sort({ createdAt: -1 }).populate('user', 'name username');
     res.json(feeds);
   } catch (err) {
     console.error(err.message);
@@ -65,8 +65,8 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const feed = await Feed.findById(req.params.id)
-      .populate('user', 'name')
-      .populate('comments.user', 'name');
+      .populate('user', 'name username')
+      .populate('comments.user', 'name username');
     
     if (!feed) {
       return res.status(404).json({ msg: 'Feed post not found' });

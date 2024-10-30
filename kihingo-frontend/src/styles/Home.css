@@ -17,6 +17,34 @@
   align-items: center;
 }
 
+.bible-verse-scroll {
+  background-color: #cbbad4;
+  color: rgb(215, 100, 12);
+  padding: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+  height: 50px;
+  display: flex;
+  align-items: center;
+}
+
+.scrolling-verse {
+  position: absolute;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+@keyframes scrollVerse {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
 .greeting-section {
   background-image: url('/public/kihi.jpg');
   background-size: cover;

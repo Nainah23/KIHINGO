@@ -2,7 +2,7 @@
 @baseUrl = http://localhost:8000/api
 @username = "c"
 @password = 1
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxN2M3ZDFkNjNhNmRmYzhiYTQ0N2E2Iiwicm9sZSI6Im1lbWJlciJ9LCJpYXQiOjE3MzAxNDQwODcsImV4cCI6MTczMDE0NzY4N30.noUIlaFFhbg23uvYTNAqkhmJqWWYKHCdp27bsEhztJ0
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxN2M3ZDFkNjNhNmRmYzhiYTQ0N2E2Iiwicm9sZSI6Im1lbWJlciJ9LCJpYXQiOjE3MzAyODM4MjksImV4cCI6MTczMDI4NzQyOX0.qgvEo98Ibh5py-T8_RBEJk9ZNTlN3BFz5wxw5017Kw0
 
 ### Auth Routes
 
@@ -29,6 +29,9 @@ Content-Type: application/json
 ### Get User
 GET {{baseUrl}}/auth/user
 x-auth-token: {{token}}
+
+### Get Profile
+GET {{baseUrl}}/auth/profile/c
 
 ### Feed Routes
 

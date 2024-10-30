@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { MoreVertical, Bell, MessageCircle, ThumbsUp } from 'lucide-react';
+import { MoreVertical, Bell, MessageCircle, ThumbsUp, Edit, Trash } from 'lucide-react';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 import '../styles/Feed.css';
@@ -129,16 +129,6 @@ class ApiService {
     }
   }
 
-  async fetchBibleVerse() {
-    try {
-      const response = await axios.get('http://localhost:8000/api/bible-verse');
-      return response.data.verse;
-    } catch (error) {
-      console.error('Error fetching Bible verse:', error);
-      return 'Unable to load verse at this time.';
-    }
-  }
-
   async createPost(content) {
     try {
       const { data: newPost } = await axios.post(
@@ -235,6 +225,18 @@ const EditPostModal = ({ post, onClose, onUpdate }) => {
   const [content, setContent] = useState(post?.content || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const emojiPickerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -280,13 +282,7 @@ const EditPostModal = ({ post, onClose, onUpdate }) => {
             </div>
           )}
           <div className="modal-buttons">
-            <button 
-              type="submit" 
-              className="update-button"
-              disabled={isSubmitting || !content.trim()}
-            >
-              {isSubmitting ? 'Updating...' : 'Update'}
-            </button>
+          <button type="submit" className="update-button">Update</button>
             <button 
               type="button" 
               onClick={onClose} 
@@ -298,9 +294,9 @@ const EditPostModal = ({ post, onClose, onUpdate }) => {
           </div>
         </form>
       </div>
-    </div>
-  );
-};
+      </div>
+    );
+  };
 
 // Main Feed Component
 const Feed = () => {
@@ -316,10 +312,13 @@ const Feed = () => {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userProfileImage, setUserProfileImage] = useState('/default-profile.png');
-  
+  const [isScrolling, setIsScrolling] = useState(false);
+
   const navigate = useNavigate();
   const timeUpdateInterval = useRef(null);
   const emojiPickerRef = useRef(null);
+  const scrollCount = useRef(0);
+  const verseRef = useRef(null);
   const api = React.useMemo(() => new ApiService(navigate), [navigate]);
 
   const handleAuthorClick = (e, username) => {
@@ -331,6 +330,44 @@ const Feed = () => {
       console.warn('No username provided for profile navigation');
     }
   };
+
+  const startScrollAnimation = () => {
+    setIsScrolling(true);
+    if (verseRef.current) {
+      verseRef.current.style.animation = 'none';
+      // Properly trigger reflow
+      void verseRef.current.offsetHeight;
+      verseRef.current.style.animation = 'scrollVerse 15s linear';
+    }
+  };
+
+  const handleScrollEnd = () => {
+    scrollCount.current += 1;
+    if (scrollCount.current < 2) {
+      // Start another scroll cycle
+      startScrollAnimation();
+    } else {
+      // After two complete scrolls, fetch new verse
+      setIsScrolling(false);
+      fetchBibleVerse();
+    }
+  };
+
+  const fetchBibleVerse = useCallback(async () => {
+    try {
+      const res = await fetch('http://localhost:8000/api/bible-verse');
+      if (!res.ok) throw new Error('Failed to fetch Bible verse');
+      const data = await res.json();
+      // Only update verse if not currently scrolling
+      if (!isScrolling) {
+        setBibleVerse(data.verse);
+        scrollCount.current = 0;
+        startScrollAnimation();
+      }
+    } catch (error) {
+      console.error('Error fetching Bible verse:', error);
+    }
+  }, [isScrolling]);
 
   const handlePostClick = (postId) => {
     navigate(`/feed/${postId}`);
@@ -367,15 +404,15 @@ const Feed = () => {
           setUserProfileImage(imageUrl);
         }
 
-        const [feedsData, notificationsData, verseData] = await Promise.all([
+        const [feedsData, notificationsData] = await Promise.all([
           api.fetchFeeds(),
           api.fetchNotifications().catch(() => []),
-          api.fetchBibleVerse().catch(() => '')
         ]);
 
         setFeeds(feedsData);
         setNotifications(notificationsData);
-        setBibleVerse(verseData);
+
+        fetchBibleVerse();
 
       } catch (err) {
         setError('Failed to load feed data. Please try refreshing the page.');
@@ -486,6 +523,71 @@ const Feed = () => {
     }
   };
 
+  const renderDropdownMenu = (feed) => {
+    if (activeDropdown === feed._id) {
+      return (
+        <div className="dropdown">
+          <button 
+            onClick={() => setEditingPost(feed)}
+            className="dropdown-button"
+          >
+            <Edit size={16} className="dropdown-icon" />
+            Edit
+          </button>
+          <button 
+            onClick={() => handleDelete(feed._id)}
+            className="dropdown-button"
+          >
+            <Trash size={16} className="dropdown-icon" />
+            Delete
+          </button>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Updated post form with emoji picker matching SinglePost.js
+  const renderPostForm = () => (
+    <form onSubmit={handlePostSubmit} className="post-form">
+      <div className="new-post">
+        <div className="emoji-input-container">
+          <button 
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="emoji-button"
+          >
+            😊
+          </button>
+          {showEmojiPicker && (
+            <div className="emoji-picker-container" ref={emojiPickerRef}>
+              <Picker 
+                data={data} 
+                onEmojiSelect={(emoji) => {
+                  setNewPostContent(prev => prev + emoji.native);
+                  setShowEmojiPicker(false);
+                }} 
+              />
+            </div>
+          )}
+        </div>
+        <textarea
+          value={newPostContent}
+          onChange={(e) => setNewPostContent(e.target.value)}
+          placeholder="What's on your mind?"
+          className="post-textarea"
+        />
+      </div>
+      <button 
+        type="submit" 
+        className="post-submit-button"
+        disabled={!newPostContent.trim()}
+      >
+        Post
+      </button>
+    </form>
+  );
+
   if (loading) return <div className="loading-spinner">Loading...</div>;
   if (error) return <div className="error-message">{error}</div>;
 
@@ -493,7 +595,7 @@ const Feed = () => {
     <div className="feed-container">
       <div className="sidebar">
         <div className="user-profile">
-          <img 
+          <img
             src={userProfileImage}
             alt="User Profile"
             className="profile-image"
@@ -513,8 +615,8 @@ const Feed = () => {
             )}
           </h3>
           {notifications.map((notification, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="notification-item"
               onClick={() => {
                 if (notification.postId) {
@@ -529,89 +631,53 @@ const Feed = () => {
             </div>
           ))}
         </div>
-      </div>      
-
+      </div>
+  
       <div className="main-content">
-      <button className="back-home-button" onClick={() => navigate('/')}>
+        <button className="back-home-button" onClick={() => navigate('/')}>
           Back Home
         </button>
-        
+  
         <div className="bible-verse-container">
           <div className="bible-verse-scroll">
-            <span>{bibleVerse || 'Loading verse...'}</span>
+            <p
+              ref={verseRef}
+              className="scrolling-verse"
+              onAnimationEnd={handleScrollEnd}
+            >
+              {bibleVerse || 'Loading verse...'}
+            </p>
           </div>
         </div>
-
+  
         <h2 className="feed-title">Feed</h2>
-        
-        <form onSubmit={handlePostSubmit} className="post-form">
-          <div className="new-post">
-        <div className="emoji-button-container">
-          <button
-            onClick={() => setShowEmojiPicker((prev) => !prev)}
-            className="emoji-button"
-          >
-            😊
-          </button>
-          {showEmojiPicker && (
-            <div ref={emojiPickerRef} className="emoji-picker-container">
-              <Picker data={data} onEmojiSelect={onEmojiSelect} />
-            </div>
-          )}
-        </div>
-        <textarea
-          value={newPostContent}
-          onChange={(e) => setNewPostContent(e.target.value)}
-          placeholder="What's on your mind?"
-          className="post-textarea"
-        />
-      </div>
-          <button 
-            type="submit" 
-            className="post-submit-button"
-            disabled={!newPostContent.trim()}
-          >
-            Post
-          </button>
-        </form>
-
+  
+        {renderPostForm()}
+  
         {feeds.map((feed) => (
           feed && (
             <div key={feed._id} className="feed-item">
               <div className="feed-header">
                 <div className="author-info">
-                  <span 
-                    className="author-name"
-                    onClick={(e) => handleAuthorClick(e, feed.user._id)}
+                  <span className="author-name">{feed.user.name}</span>
+                  <span
+                    className="author-username"
+                    onClick={(e) => handleAuthorClick(e, feed.user.username)}
                     style={{ cursor: 'pointer' }}
                   >
-                    {feed.user.name}
+                    @{feed.user.username}
                   </span>
-                  <span className="author-username">@{feed.user.username}</span>
                   <span className="feed-time">{formatTimeElapsed(feed.createdAt)}</span>
                 </div>
-                {user && user._id === feed.user._id && (
-                  <div className="dropdown-wrapper">
-                    <MoreVertical 
-                      onClick={() => toggleDropdown(feed._id)}
-                      className="dropdown-icon"
-                    />
-                    {activeDropdown === feed._id && (
-                      <div className="dropdown-menu">
-                        <button 
-                          className="edit-button"
-                          onClick={() => handleUpdate(feed._id, feed.content)}
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          className="delete-button"
-                          onClick={() => handleDelete(feed._id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
+                {user && (user._id === feed.user._id || user.role === 'admin') && (
+                  <div className="post-actions">
+                    <button
+                      onClick={() => setActiveDropdown(activeDropdown === feed._id ? null : feed._id)}
+                      className="action-button"
+                    >
+                      <MoreVertical size={20} />
+                    </button>
+                    {renderDropdownMenu(feed)}
                   </div>
                 )}
               </div>
@@ -619,14 +685,14 @@ const Feed = () => {
                 {feed.content}
               </p>
               <div className="reactions">
-                <button 
-                  onClick={() => handleReaction(feed._id)} 
+                <button
+                  onClick={() => handleReaction(feed._id)}
                   className="reaction-button"
                 >
                   <ThumbsUp size={18} /> {feed.reactions?.length || 0}
                 </button>
-                <button 
-                  onClick={() => handlePostClick(feed._id)} 
+                <button
+                  onClick={() => handlePostClick(feed._id)}
                   className="comment-button"
                 >
                   <MessageCircle size={18} /> {feed.comments?.length || 0}
@@ -635,17 +701,17 @@ const Feed = () => {
             </div>
           )
         ))}
-
+  
         {editingPost && (
-          <EditPostModal 
-            post={editingPost} 
-            onClose={() => setEditingPost(null)} 
-            onUpdate={handleUpdate} 
+          <EditPostModal
+            post={editingPost}
+            onClose={() => setEditingPost(null)}
+            onUpdate={handleUpdate}
           />
         )}
       </div>
-    </div>
-  );
-};
-
-export default Feed;
+      </div>
+    );
+  };
+  
+  export default Feed;

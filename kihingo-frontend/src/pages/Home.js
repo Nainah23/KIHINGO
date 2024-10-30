@@ -1,5 +1,5 @@
 // src/pages/Home.js;
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, { useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { FaHome, FaVideo, FaNewspaper, FaChevronLeft, FaChevronRight, FaCalendar, FaBookOpen, FaDonate, FaComments } from 'react-icons/fa';
@@ -14,6 +14,10 @@ const Home = () => {
   const headingIndexRef = useRef(0);
   const subtitleIndexRef = useRef(0);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [randomVerse, setRandomVerse] = useState('');
+  const scrollCount = useRef(0);
+  const verseRef = useRef(null);
   const slides = [
     { title: "Our Church Groups", description: "Discover the diverse communities within our church", image: "/CHURCH.jpg" },
     { title: "Youth Group", description: "Empowering the next generation of faithful leaders", image: "/YOUTH.jpg" },
@@ -50,7 +54,47 @@ const Home = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const fetchRandomBibleVerse = useCallback(async () => {
+    try {
+      const res = await fetch('http://localhost:8000/api/bible-verse');
+      if (!res.ok) throw new Error('Failed to fetch Bible verse');
+      const data = await res.json();
+      // Only update verse if not currently scrolling
+      if (!isScrolling) {
+        setRandomVerse(data.verse);
+        scrollCount.current = 0;
+        startScrollAnimation();
+      }
+    } catch (error) {
+      console.error('Error fetching Bible verse:', error);
+    }
+  }, [isScrolling]);
+
+  const startScrollAnimation = () => {
+    setIsScrolling(true);
+    if (verseRef.current) {
+      verseRef.current.style.animation = 'none';
+      // Properly trigger reflow
+      void verseRef.current.offsetHeight;
+      verseRef.current.style.animation = 'scrollVerse 15s linear';
+    }
+  };
+
+  const handleScrollEnd = () => {
+    scrollCount.current += 1;
+    if (scrollCount.current < 2) {
+      // Start another scroll cycle
+      startScrollAnimation();
+    } else {
+      // After two complete scrolls, fetch new verse
+      setIsScrolling(false);
+      fetchRandomBibleVerse();
+    }
+  };
+
+
   useEffect(() => {
+    fetchRandomBibleVerse();
     const heading = "Welcome to ACK St. Philip's KIHINGO Church";
     const subtitle = "Join us in worship and community";
     const headingLength = heading.length;
@@ -86,7 +130,7 @@ const Home = () => {
       clearInterval(headingIntervalId);
       clearTimeout(subtitleTimeoutId);
     };
-  }, []);
+  }, [fetchRandomBibleVerse]);
   
 
 
@@ -127,6 +171,15 @@ const Home = () => {
       </nav>
 
       <main className="main-content">
+      <div className="bible-verse-scroll">
+        <p 
+          ref={verseRef}
+          className="scrolling-verse"
+          onAnimationEnd={handleScrollEnd}
+        >
+          {randomVerse}
+        </p>
+      </div>   
       <section className="hero-section">
           <div className="hero-background">
             <h1 className="animated-heading">{displayText}</h1>

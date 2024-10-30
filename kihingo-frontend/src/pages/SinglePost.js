@@ -271,8 +271,14 @@ const SinglePost = () => {
     setComment(prev => prev + emoji.native);
   };
 
-  const handleUserClick = (username) => {
-    navigate(`/profile/${username}`);
+  const handleUserClick = (e, username) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (username) {
+      navigate(`/profile/${username}`);
+    } else {
+      console.warn('No username provided for profile navigation');
+    }
   };
 
   if (!post) return <div>Loading...</div>;
@@ -286,12 +292,14 @@ const SinglePost = () => {
       <div className="post-content">
         <div className="post-header">
           <div className="user-info">
-            <span 
-              onClick={() => handleUserClick(post.user.username)}
-              className="user-name"
-            >
-              {post.user.name}
-            </span>
+            <span className="author-name">{post.user.name}</span>
+          <span 
+          className="author-username"
+          onClick={(e) => handleUserClick(e, post.user.username)}
+          style={{ cursor: 'pointer' }}
+        >
+          @{post.user.username}
+        </span>
             <span className="post-time">
               {formatTimeElapsed(post.createdAt)}
             </span>
@@ -397,11 +405,12 @@ const SinglePost = () => {
           {post.comments.map((comment) => (
             <div key={comment._id} className="comment">
               <div className="comment-header">
+                <span className="comment-user-name">{comment.user.name}</span>
                 <span 
-                  onClick={() => handleUserClick(comment.user.username)}
+                  onClick={(e) => handleUserClick(e, comment.user.username)}
                   className="comment-user-name"
                 >
-                  {comment.user.name}
+                  @{comment.user.username}
                 </span>
                 {user && (user._id === comment.user._id || user.role === 'admin') && (
                   <div className="comment-actions">
