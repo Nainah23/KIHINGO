@@ -2,7 +2,7 @@
 @baseUrl = http://localhost:8000/api
 @username = "e"
 @password = 1
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxOTI3YTEzMDdlNmI0YmVjODAzZTNiIiwicm9sZSI6InJldmVyZW5kIn0sImlhdCI6MTczMDMxNjc5MywiZXhwIjoxNzMwMzIwMzkzfQ.ERwmHikAKwW4fSWhqWkNzDSM-Oh3N0oKAa4-5B4ozCw
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxOTI3YTEzMDdlNmI0YmVjODAzZTNiIiwicm9sZSI6InJldmVyZW5kIn0sImlhdCI6MTczMDM5ODA5OCwiZXhwIjoxNzMwNDAxNjk4fQ.d7NENM-mlUQD_yRhNxeicZxs63GsF8LmMwsdk-9WRVU
 
 ### Auth Routes
 
@@ -204,20 +204,30 @@ x-auth-token: {{token}}
 
 ### Livestream Routes
 
-### Create Livestream
+### Create new livestream
 POST {{baseUrl}}/livestream
 Content-Type: application/json
 x-auth-token: {{token}}
 
 {
-  "title": "Sunday Service Livestream",
-  "description": "Live broadcast of our Sunday service",
-  "startTime": "2024-12-01T09:00:00Z",
-  "endTime": "2024-12-01T11:00:00Z"
+    "title": "Test Livestream",
+    "description": "This is a test livestream",
+    "startTime": "2024-11-01T10:00:00.000Z",
+    "endTime": "2024-11-01T11:00:00.000Z"
 }
 
-### Get All Livestreams
-GET {{baseUrl}}/livestream
+### Start streaming for existing livestream
+POST {{baseUrl}}/livestreams/{{streamId}}/start
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "inputSource": "test-videos/sample.mp4"
+}
+
+### Get all livestreams
+GET {{baseUrl}}/livestreams
+Authorization: Bearer {{token}}
 
 ### Update Livestream
 PUT {{baseUrl}}/livestream/livestream_id_here

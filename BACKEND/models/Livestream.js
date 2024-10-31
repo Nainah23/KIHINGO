@@ -16,6 +16,11 @@ const LivestreamSchema = new mongoose.Schema({
   },
   youtubeBroadcastId: {
     type: String,
+    required: true
+  },
+  streamKey: {
+    type: String,
+    required: true
   },
   startTime: {
     type: Date,
@@ -30,10 +35,18 @@ const LivestreamSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  status: {
+    type: String,
+    enum: ['created', 'streaming', 'ended', 'error'],
+    default: 'created'
+  },
+  streamingDetails: {
+    rtmpUrl: String,
+    streamKey: String,
+    error: String
   }
+}, {
+  timestamps: true  // This replaces the manual createdAt and adds updatedAt
 });
 
 module.exports = mongoose.model('Livestream', LivestreamSchema);

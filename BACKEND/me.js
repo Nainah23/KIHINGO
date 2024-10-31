@@ -1,152 +1,339 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
-import axios from 'axios';
-import { AuthContext } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { MoreVertical, Bell, MessageCircle, ThumbsUp } from 'lucide-react';
-import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
-import '../styles/Feed.css';
+// BACKEND/routes/livestreamRoutes.js
+const express = require('express');
+const router = express.Router();
+const Livestream = require('../models/Livestream');
+const authMiddleware = require('../middleware/authMiddleware');
+const { createLiveBroadcast, startStreaming, endLiveBroadcast } = require('../services/youtubeService');
 
-// ... (keep all the existing utility functions and ApiService class) ...
+// Create a livestream
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    const { title, description, startTime, endTime, inputSource } = req.body;
 
-// Main Feed Component
-const Feed = () => {
-  const { user } = useContext(AuthContext);
-  const [feeds, setFeeds] = useState([]);
-  const [newPostContent, setNewPostContent] = useState('');
-  const [bibleVerse, setBibleVerse] = useState('');
-  const [editingPost, setEditingPost] = useState(null);
-  const [activeDropdown, setActiveDropdown] = useState(null);
-  const [notifications, setNotifications] = useState([]);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userProfileImage, setUserProfileImage] = useState('/default-profile.png');
-  const [isScrolling, setIsScrolling] = useState(false);
-  
-  const navigate = useNavigate();
-  const timeUpdateInterval = useRef(null);
-  const emojiPickerRef = useRef(null);
-  const scrollCount = useRef(0);
-  const verseRef = useRef(null);
-  const api = React.useMemo(() => new ApiService(navigate), [navigate]);
+    // Create live broadcast on YouTube
+    const { broadcastId, streamUrl, streamKey } = await createLiveBroadcast(
+      title, 
+      description, 
+      startTime, 
+      endTime
+    );
 
-  // Add these new functions for Bible verse scrolling
-  const startScrollAnimation = () => {
-    setIsScrolling(true);
-    if (verseRef.current) {
-      verseRef.current.style.animation = 'none';
-      // Properly trigger reflow
-      void verseRef.current.offsetHeight;
-      verseRef.current.style.animation = 'scrollVerse 15s linear';
+    // Start streaming if inputSource is provided
+    if (inputSource) {
+      await startStreaming(inputSource, streamUrl, streamKey);
     }
-  };
 
-  const handleScrollEnd = () => {
-    scrollCount.current += 1;
-    if (scrollCount.current < 2) {
-      // Start another scroll cycle
-      startScrollAnimation();
+    const newLivestream = new Livestream({
+      title,
+      description,
+      streamUrl: `https://www.youtube.com/watch?v=${broadcastId}`,
+      startTime,
+      endTime,
+      createdBy: req.user.id,
+      youtubeBroadcastId: broadcastId,
+      streamKey, // Save stream key if you need it later
+    });
+
+    const livestream = await newLivestream.save();
+    res.json(livestream);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Start streaming for an existing livestream
+router.post('/:id/start', authMiddleware, async (req, res) => {
+  try {
+    const { inputSource } = req.body;
+    const livestream = await Livestream.findById(req.params.id);
+
+    if (!livestream) {
+      return res.status(404).json({ msg: 'Livestream not found' });
+    }
+
+    if (livestream.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(401).json({ msg: 'User not authorized' });
+    }
+
+    await startStreaming(inputSource, livestream.streamUrl, livestream.streamKey);
+    res.json({ msg: 'Streaming started successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Get all livestreams
+router.get('/', async (req, res) => {
+  try {
+    const livestreams = await Livestream.find().sort({ startTime: -1 }).populate('createdBy', 'name');
+    res.json(livestreams);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Update a livestream
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { title, description, startTime, endTime } = req.body;
+    const livestream = await Livestream.findById(req.params.id);
+
+    if (!livestream) {
+      return res.status(404).json({ msg: 'Livestream not found' });
+    }
+
+    if (livestream.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(401).json({ msg: 'User not authorized' });
+    }
+
+    livestream.title = title;
+    livestream.description = description;
+    livestream.startTime = startTime;
+    livestream.endTime = endTime;
+
+    await livestream.save();
+
+    res.json(livestream);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Delete a livestream
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const livestream = await Livestream.findById(req.params.id);
+
+    if (!livestream) {
+      return res.status(404).json({ msg: 'Livestream not found' });
+    }
+
+    if (livestream.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(401).json({ msg: 'User not authorized' });
+    }
+
+    if (livestream.youtubeBroadcastId) {
+      await endLiveBroadcast(livestream.youtubeBroadcastId);
+    }
+
+    await livestream.remove();
+
+    res.json({ msg: 'Livestream removed' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+module.exports = router;
+
+
+// BACKEND/services/youtubeService.js
+const YouTubeLiveStream = require('youtube-live-streaming');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegStatic = require('ffmpeg-static');
+const { google } = require('googleapis');
+const fs = require('fs');
+const path = require('path');
+
+// Set ffmpeg path
+ffmpeg.setFfmpegPath(ffmpegStatic);
+
+const TOKEN_PATH = path.join(__dirname, '../config/official-channel-tokens.json');
+
+// Load client credentials and set up OAuth2 client
+async function getOAuth2Client() {
+    const { client_id, client_secret, redirect_uris } = require('../config/oauth2-credentials.json').web;
+    const oauth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+
+    let tokens;
+    if (fs.existsSync(TOKEN_PATH)) {
+        tokens = JSON.parse(fs.readFileSync(TOKEN_PATH, 'utf8'));
     } else {
-      // After two complete scrolls, fetch new verse
-      setIsScrolling(false);
-      fetchBibleVerse();
+        tokens = {
+            access_token: process.env.OAUTH_ACCESS_TOKEN,
+            refresh_token: process.env.OAUTH_REFRESH_TOKEN,
+        };
     }
-  };
 
-  const fetchBibleVerse = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/api/bible-verse');
-      // Only update verse if not currently scrolling
-      if (!isScrolling) {
-        setBibleVerse(response.data.verse);
-        scrollCount.current = 0;
-        startScrollAnimation();
-      }
-    } catch (error) {
-      console.error('Error fetching Bible verse:', error);
-      setBibleVerse('Unable to load verse at this time.');
-    }
-  };
+    oauth2Client.setCredentials(tokens);
 
-  // ... (keep all the existing handler functions) ...
-
-  useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Load user profile image
-        if (user?.profileImage) {
-          const imageUrl = await api.getImageUrl(user.profileImage);
-          setUserProfileImage(imageUrl);
+    oauth2Client.on('tokens', (newTokens) => {
+        if (newTokens.refresh_token) {
+            tokens.refresh_token = newTokens.refresh_token;
         }
+        tokens.access_token = newTokens.access_token;
+        fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
+    });
 
-        // Fetch initial data
-        const [feedsData, notificationsData] = await Promise.all([
-          api.fetchFeeds(),
-          api.fetchNotifications().catch(() => [])
-        ]);
+    return oauth2Client;
+}
 
-        setFeeds(feedsData);
-        setNotifications(notificationsData);
+// Initialize YouTube Live instance
+async function getYouTubeLive() {
+    const authClient = await getOAuth2Client();
+    return new YouTubeLiveStream(authClient);
+}
+
+const createLiveBroadcast = async (title, description, startTime, endTime) => {
+    try {
+        const youtubeLive = await getYouTubeLive();
         
-        // Initialize Bible verse scroll
-        fetchBibleVerse();
+        // Create broadcast
+        const broadcast = await youtubeLive.createBroadcast({
+            snippet: {
+                title,
+                description,
+                scheduledStartTime: startTime,
+                scheduledEndTime: endTime,
+            },
+            status: {
+                privacyStatus: 'public',
+                selfDeclaredMadeForKids: false,
+            },
+            contentDetails: {
+                enableAutoStart: true,
+                enableAutoStop: true,
+                enableDvr: true,
+                recordFromStart: true,
+            },
+        });
 
-      } catch (err) {
-        setError('Failed to load feed data. Please try refreshing the page.');
-        console.error('Error loading initial data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+        // Create stream
+        const stream = await youtubeLive.createStream({
+            snippet: {
+                title: `${title} Stream`,
+            },
+            cdn: {
+                frameRate: '60fps',
+                ingestionType: 'rtmp',
+                resolution: '1080p',
+            },
+        });
 
-    loadInitialData();
+        // Bind broadcast and stream
+        await youtubeLive.bindBroadcastToStream(broadcast.id, stream.id);
 
-    timeUpdateInterval.current = setInterval(() => {
-      setFeeds(prevFeeds => [...prevFeeds]);
-    }, 60000);
-
-    return () => {
-      if (timeUpdateInterval.current) {
-        clearInterval(timeUpdateInterval.current);
-      }
-    };
-  }, [user, navigate, api]);
-
-  if (loading) return <div className="loading-spinner">Loading...</div>;
-  if (error) return <div className="error-message">{error}</div>;
-
-  return (
-    <div className="feed-container">
-      <div className="sidebar">
-        {/* ... (keep existing sidebar code) ... */}
-      </div>      
-
-      <div className="main-content">
-        <button className="back-home-button" onClick={() => navigate('/')}>
-          Back Home
-        </button>
-        
-        <div className="bible-verse-scroll">
-          <p 
-            ref={verseRef}
-            className="scrolling-verse"
-            onAnimationEnd={handleScrollEnd}
-          >
-            {bibleVerse || 'Loading verse...'}
-          </p>
-        </div>
-
-        <h2 className="feed-title">Feed</h2>
-        
-        {/* ... (keep rest of the existing JSX) ... */}
-      </div>
-    </div>
-  );
+        return {
+            broadcastId: broadcast.id,
+            streamUrl: stream.cdn.ingestionAddress,
+            streamKey: stream.cdn.streamName,
+            broadcast,
+            stream,
+        };
+    } catch (error) {
+        console.error('Error creating live broadcast:', error);
+        throw error;
+    }
 };
 
-export default Feed;
+const startStreaming = async (inputSource, streamUrl, streamKey) => {
+    return new Promise((resolve, reject) => {
+        const rtmpUrl = `${streamUrl}/${streamKey}`;
+        
+        const stream = ffmpeg(inputSource)
+            .inputOptions([
+                '-re', // Read input at native framerate
+                '-stream_loop -1', // Loop the input indefinitely
+            ])
+            .outputOptions([
+                '-c:v libx264', // Video codec
+                '-preset veryfast', // Encoding preset
+                '-b:v 6000k', // Video bitrate
+                '-maxrate 6000k',
+                '-bufsize 12000k',
+                '-acodec aac', // Audio codec
+                '-ar 44100', // Audio sample rate
+                '-b:a 128k', // Audio bitrate
+                '-f flv', // Output format
+            ])
+            .on('start', () => {
+                console.log('Stream started:', rtmpUrl);
+                resolve();
+            })
+            .on('error', (err) => {
+                console.error('Streaming error:', err);
+                reject(err);
+            })
+            .on('end', () => {
+                console.log('Stream ended');
+            });
+
+        stream.save(rtmpUrl);
+    });
+};
+
+const endLiveBroadcast = async (broadcastId) => {
+    try {
+        const youtubeLive = await getYouTubeLive();
+        await youtubeLive.transitionBroadcast(broadcastId, 'complete');
+    } catch (error) {
+        console.error('Error ending live broadcast:', error);
+        throw error;
+    }
+};
+
+module.exports = {
+    createLiveBroadcast,
+    startStreaming,
+    endLiveBroadcast,
+};
+
+
+
+// BACKEND/models/Livestream.js
+const mongoose = require('mongoose');
+
+const LivestreamSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  streamUrl: {
+    type: String,
+    required: true,
+  },
+  youtubeBroadcastId: {
+    type: String,
+    required: true
+  },
+  streamKey: {
+    type: String,
+    required: true
+  },
+  startTime: {
+    type: Date,
+    required: true
+  },
+  endTime: {
+    type: Date,
+    required: true
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ['created', 'streaming', 'ended', 'error'],
+    default: 'created'
+  },
+  streamingDetails: {
+    rtmpUrl: String,
+    streamKey: String,
+    error: String
+  }
+}, {
+  timestamps: true  // This replaces the manual createdAt and adds updatedAt
+});
+
+module.exports = mongoose.model('Livestream', LivestreamSchema);

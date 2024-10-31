@@ -1,17 +1,27 @@
-// Backend/routes/livestreamRoutes.js
+// BACKEND/routes/livestreamRoutes.js
 const express = require('express');
 const router = express.Router();
 const Livestream = require('../models/Livestream');
 const authMiddleware = require('../middleware/authMiddleware');
-const { createLiveBroadcast, endLiveBroadcast } = require('../services/youtubeService');
+const { createLiveBroadcast, startStreaming, endLiveBroadcast } = require('../services/youtubeService');
 
 // Create a livestream
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { title, description, startTime, endTime } = req.body;
+    const { title, description, startTime, endTime, inputSource } = req.body;
 
     // Create live broadcast on YouTube
-    const { broadcastId, streamUrl } = await createLiveBroadcast(title, description, startTime, endTime);
+    const { broadcastId, streamUrl, streamKey } = await createLiveBroadcast(
+      title, 
+      description, 
+      startTime, 
+      endTime
+    );
+
+    // Start streaming if inputSource is provided
+    if (inputSource) {
+      await startStreaming(inputSource, streamUrl, streamKey);
+    }
 
     const newLivestream = new Livestream({
       title,
@@ -21,10 +31,33 @@ router.post('/', authMiddleware, async (req, res) => {
       endTime,
       createdBy: req.user.id,
       youtubeBroadcastId: broadcastId,
+      streamKey, // Save stream key if you need it later
     });
 
     const livestream = await newLivestream.save();
     res.json(livestream);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Start streaming for an existing livestream
+router.post('/:id/start', authMiddleware, async (req, res) => {
+  try {
+    const { inputSource } = req.body;
+    const livestream = await Livestream.findById(req.params.id);
+
+    if (!livestream) {
+      return res.status(404).json({ msg: 'Livestream not found' });
+    }
+
+    if (livestream.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(401).json({ msg: 'User not authorized' });
+    }
+
+    await startStreaming(inputSource, livestream.streamUrl, livestream.streamKey);
+    res.json({ msg: 'Streaming started successfully' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');

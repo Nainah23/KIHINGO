@@ -5,3 +5,5 @@ BACKEND/package-lock.json
 kihingo-frontend/node_modules/
 kihingo-frontend/.env
 kihingo-frontend/package-lock.json
+BACKEND/config/oauth2-credentials.json
+BACKEND/config/service-account-key.json

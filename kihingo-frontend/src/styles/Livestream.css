@@ -1,21 +1,102 @@
-/* src/styles/Livestream.css */
-@import './common.css';
+/* Livestream.css */
 
 .livestream-container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+    font-family: 'Arial', sans-serif;
+    background: #f2f8ff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .header h2 {
+    color: #333;
+    font-size: 2rem;
+  }
+  
+  .header button, .header a {
+    background: #0078d7;
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .header button:hover, .header a:hover {
+    background: #005bb5;
+  }
+  
+  .create-stream-form {
     display: flex;
     flex-direction: column;
-    align-items: center;
-}
-
-.livestream {
-    width: 100%;
-    max-width: 600px;
-    margin: 20px 0;
-}
-
-@media (max-width: 768px) {
-    .livestream iframe {
-        width: 100%; /* Make iframe responsive */
-        height: auto; /* Maintain aspect ratio */
-    }
-}
+    margin-top: 20px;
+    gap: 10px;
+  }
+  
+  .create-stream-form input,
+  .create-stream-form textarea,
+  .create-stream-form button {
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+  }
+  
+  .create-stream-form button {
+    background: #4caf50;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .create-stream-form button:hover {
+    background: #388e3c;
+  }
+  
+  .ongoing-streams, .scheduled-streams {
+    margin-top: 30px;
+  }
+  
+  .ongoing-streams h3, .scheduled-streams h3 {
+    color: #333;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+  
+  .livestream, .scheduled-livestream {
+    padding: 15px;
+    margin: 10px 0;
+    background: #e3f2fd;
+    border-radius: 8px;
+    border: 1px solid #90caf9;
+    transition: transform 0.2s;
+  }
+  
+  .livestream:hover, .scheduled-livestream:hover {
+    transform: scale(1.02);
+  }
+  
+  .scheduled-livestream {
+    background: #ffecb3;
+    border: 1px solid #ffb74d;
+  }
+  
+  .livestream h3, .scheduled-livestream h3 {
+    font-size: 1.2rem;
+    color: #0078d7;
+  }
+  
+  .livestream p, .scheduled-livestream p {
+    font-size: 1rem;
+    color: #555;
+  }
+  

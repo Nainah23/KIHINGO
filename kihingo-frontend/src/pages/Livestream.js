@@ -24,9 +24,7 @@ const Livestream = () => {
 
   const handleCreateStream = async (e) => {
     e.preventDefault();
-
-    // Check if the user has the required role
-    if (user?.role !== 'admin' && user?.role !== 'pastor') {
+    if (user?.role !== 'admin' && user?.role !== 'reverend') {
       alert('You do not have permission to create a livestream.');
       return;
     }
@@ -48,6 +46,10 @@ const Livestream = () => {
     logout();
   };
 
+  const now = new Date();
+  const ongoingStreams = livestreams.filter(stream => new Date(stream.startTime) <= now && new Date(stream.endTime) >= now);
+  const scheduledStreams = livestreams.filter(stream => new Date(stream.startTime) > now);
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -58,8 +60,7 @@ const Livestream = () => {
         <h2>Church Livestreams</h2>
         {user ? (
           <>
-            {/* Only show the create button if the user has the appropriate role */}
-            {(user.role === 'admin' || user.role === 'pastor') && (
+            {(user.role === 'admin' || user.role === 'reverend') && (
               <button onClick={() => setIsCreating(!isCreating)}>
                 {isCreating ? 'Cancel' : 'Create New Livestream'}
               </button>
@@ -71,8 +72,8 @@ const Livestream = () => {
         )}
       </div>
 
-      {isCreating && user && (
-        <form onSubmit={handleCreateStream}>
+      {isCreating && (
+        <form onSubmit={handleCreateStream} className="create-stream-form">
           <input
             type="text"
             placeholder="Title"
@@ -102,21 +103,35 @@ const Livestream = () => {
         </form>
       )}
 
-      {livestreams.map(stream => (
-        <div key={stream._id} className="livestream">
-          <h3>{stream.title}</h3>
-          <p>{stream.description}</p>
-          <p>Start Time: {new Date(stream.startTime).toLocaleString()}</p>
-          <iframe
-            width="560"
-            height="315"
-            src={`https://www.youtube.com/embed/${stream.youtubeBroadcastId}`}
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        </div>
-      ))}
+      <div className="ongoing-streams">
+        <h3>Ongoing Livestreams</h3>
+        {ongoingStreams.map(stream => (
+          <div key={stream._id} className="livestream">
+            <h3>{stream.title}</h3>
+            <p>{stream.description}</p>
+            <p>Started at: {new Date(stream.startTime).toLocaleString()}</p>
+            <iframe
+              width="560"
+              height="315"
+              src={`https://www.youtube.com/embed/${stream.youtubeBroadcastId}`}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        ))}
+      </div>
+
+      <div className="scheduled-streams">
+        <h3>Scheduled Livestreams</h3>
+        {scheduledStreams.map(stream => (
+          <div key={stream._id} className="scheduled-livestream">
+            <h3>{stream.title}</h3>
+            <p>{stream.description}</p>
+            <p>Start Time: {new Date(stream.startTime).toLocaleString()}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
