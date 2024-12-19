@@ -85,7 +85,15 @@ router.post('/', authMiddleware, async (req, res) => {
 
     // Find the reverend
     const reverend = await User.findOne({ role: 'reverend' });
-    if (!reverend) {
+    if (reverend) {
+      await Notification.create({
+        user: reverend._id,
+        type: 'appointment',
+        post: appointment._id,
+        postModel: 'Appointment',
+        creator: req.user.id
+      });
+    } else {
       return res.status(404).json({ msg: 'No reverend found in the system' });
     }
 

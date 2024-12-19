@@ -1,6 +1,7 @@
-
+// kihingo-frontend/src/pages/Feed.js;
 import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import axios from 'axios';
+import NotificationsPane from './components/NotificationsPane';
 import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { MoreVertical, Bell, MessageCircle, ThumbsUp, Edit, Trash } from 'lucide-react';
@@ -607,30 +608,10 @@ const Feed = () => {
           <h3 className="user-name">{user.name || 'Guest'}</h3>
           <p className="user-info">@{user.username || 'guest'}</p>
         </div>
-        <div className="notifications-pane">
-          <h3 className="notifications-title">
-            <Bell size={20} /> Notifications
-            {notifications.length > 0 && (
-              <span className="notification-count">{notifications.length}</span>
-            )}
-          </h3>
-          {notifications.map((notification, index) => (
-            <div
-              key={index}
-              className="notification-item"
-              onClick={() => {
-                if (notification.postId) {
-                  navigate(`/feed/${notification.postId}`);
-                }
-              }}
-            >
-              <p className="notification-content">{notification.content}</p>
-              <small className="notification-time">
-                {formatTimeElapsed(notification.createdAt)}
-              </small>
-            </div>
-          ))}
-        </div>
+        <NotificationsPane 
+          notifications={notifications}
+          formatTimeElapsed={formatTimeElapsed}
+        />
       </div>
   
       <div className="main-content">

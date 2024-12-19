@@ -11,15 +11,21 @@ router.get('/', authMiddleware, async (req, res) => {
   try {
     const notifications = await Notification.find({ user: req.user.id })
       .populate('creator', 'name username profileImage')
-      .populate('post', 'content')
-      .sort({ createdAt: -1 });
+      .populate({
+        path: 'post',
+        select: 'content date time',
+      })
+      .sort({ createdAt: -1 })
+      .limit(10); // Limit to most recent 10 notifications
 
     const formattedNotifications = notifications.map(notification => {
       let content = '';
       if (notification.type === 'like') {
-        content = `${notification.creator.name} liked your post: "${notification.post.content.substring(0, 50)}${notification.post.content.length > 50 ? '...' : ''}"`;
+        content = `${notification.creator.name} liked your post`;
       } else if (notification.type === 'comment') {
-        content = `${notification.creator.name} commented on your post: "${notification.post.content.substring(0, 50)}${notification.post.content.length > 50 ? '...' : ''}"`;
+        content = `${notification.creator.name} commented on your post`;
+      } else if (notification.type === 'appointment') {
+        content = `${notification.creator.name} requested an appointment for ${new Date(notification.post.date).toLocaleDateString()} at ${notification.post.time}`;
       }
 
       return {

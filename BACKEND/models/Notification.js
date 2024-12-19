@@ -1,4 +1,4 @@
-// BACKEND/models/Notification.js;
+// BACKEND/models/Notification.js
 const mongoose = require('mongoose');
 
 const NotificationSchema = new mongoose.Schema({
@@ -14,8 +14,13 @@ const NotificationSchema = new mongoose.Schema({
   },
   post: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Appointment',
+    refPath: 'postModel',
     required: true
+  },
+  postModel: {
+    type: String,
+    required: true,
+    enum: ['Feed', 'Appointment']
   },
   creator: {
     type: mongoose.Schema.Types.ObjectId,
