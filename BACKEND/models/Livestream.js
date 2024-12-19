@@ -1,4 +1,3 @@
-// BACKEND/models/Livestream.js
 const mongoose = require('mongoose');
 
 const LivestreamSchema = new mongoose.Schema({
@@ -10,18 +9,6 @@ const LivestreamSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  streamUrl: {
-    type: String,
-    required: true,
-  },
-  youtubeBroadcastId: {
-    type: String,
-    required: true
-  },
-  streamKey: {
-    type: String,
-    required: true
-  },
   startTime: {
     type: Date,
     required: true
@@ -30,23 +17,22 @@ const LivestreamSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+  status: {
+    type: String,
+    enum: ['created', 'streaming', 'ended'],
+    default: 'created'
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  status: {
+  roomId: {
     type: String,
-    enum: ['created', 'streaming', 'ended', 'error'],
-    default: 'created'
-  },
-  streamingDetails: {
-    rtmpUrl: String,
-    streamKey: String,
-    error: String
+    required: true
   }
 }, {
-  timestamps: true  // This replaces the manual createdAt and adds updatedAt
+  timestamps: true
 });
 
 module.exports = mongoose.model('Livestream', LivestreamSchema);

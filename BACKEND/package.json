@@ -14,10 +14,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@100mslive/server-sdk": "^0.3.0",
     "aws-sdk": "^2.1691.0",
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.0",
+    "cloudinary-live-stream": "^1.0.0-beta.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
@@ -26,6 +28,8 @@
     "git-filter-repo": "^0.0.30",
     "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
+    "mediasoup": "^3.15.1",
+    "mediasoup-client": "^3.7.17",
     "mongoose": "^8.7.0",
     "multer": "^1.4.5-lts.1",
     "youtube-live-streaming": "^1.0.4"

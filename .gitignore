@@ -1,9 +1,16 @@
-.history
+# Node modules
+node_modules/
 BACKEND/node_modules/
-BACKEND/.env
-BACKEND/package-lock.json
 kihingo-frontend/node_modules/
+
+# Environment files
+BACKEND/.env
 kihingo-frontend/.env
-kihingo-frontend/package-lock.json
+
+# Credential files
 BACKEND/config/oauth2-credentials.json
 BACKEND/config/service-account-key.json
+
+# Other files
+BACKEND/package-lock.json
+kihingo-frontend/package-lock.json

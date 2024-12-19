@@ -57,6 +57,6 @@ app.use('/api/events', eventRoutes);
 app.use('/api/livestream', livestreamRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-app.listen(config.PORT, () => console.log(`Server running on port ${config.PORT}`));
+app.listen(config.PORT, '0.0.0.0', () => console.log(`Server running on port ${config.PORT}`));
 
 module.exports = app;
