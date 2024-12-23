@@ -5,19 +5,32 @@
   padding: 1rem;
   background-color: #f8f9fa;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: 80px; /* Fixed height for consistency */
 }
 
 .right-section {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-left: auto; /* This pushes the right section to the end */
+  gap: 2rem;
+  position: relative;
+}
+
+.main-content {
+  padding-top: 140px; /* Add padding to account for fixed nav bar */
+}
+
+.home-container {
+  padding-top: 80px; /* Should match header height */
 }
   
-  .logo-link {
-    display: flex;
-    align-items: center;
-  }
+.logo-link {
+  flex: 0 0 auto; /* Don't grow or shrink */
+}
   
   .church-logo {
     height: 50px;
@@ -25,16 +38,28 @@
   }
 
   .user-greeting {
-    position: absolute; /* Add this */
-    left: 50%; /* Add this */
-    transform: translateX(-50%); /* Add this */
+    position: absolute; /* Position greeting relative to the header */
+    left: 50%; /* Horizontally center based on the header */
+    transform: translateX(-50%); /* Correct centering by shifting half of its width */
+    font-size: 28px;
+    font-weight: bold;
     background: linear-gradient(45deg, #ff6b6b, #feca57, #1dd1a1, #5f27cd);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-size: 28px;
-    font-weight: bold;
-    animation: colorShift 5s infinite alternate;
-}
+  }
+
+
+
+  .nav-bar {
+    position: fixed;
+    top: 80px; /* Position right below header */
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 999;
+  }
 
   
   @keyframes colorShift {
@@ -50,9 +75,8 @@
   }
   
   .user-menu {
-    display: flex;
-    align-items: center;
-    margin-left: auto; /* Add this */
+    position: relative;
+    margin-left: auto;
   }
   
   .user-button {
@@ -64,9 +88,10 @@
     height: 40px;
     font-size: 1rem;
     cursor: pointer;
-    position: relative; /* Add this */
-    right: 0;          /* Add this */
-}
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   
   .dropdown {
     position: relative;
@@ -74,13 +99,14 @@
   
   .dropdown-menu {
     position: absolute;
-    right: 0;
-    top: 100%;
+    top: 100%; /* Start right below the button */
+    right: 0; /* Align to the right edge of the user button */
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 4px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    z-index: 1000;
+    z-index: 1002;
+    min-width: 200px;
   }
   
   .dropdown-button {
@@ -117,4 +143,20 @@
   .signup-button {
     background-color: #28a745;
     color: white;
+  }
+
+
+  /* Ensure the header layout works on smaller screens */
+  @media screen and (max-width: 768px) {
+    .header {
+      padding: 1rem;
+    }
+    
+    .right-section {
+      gap: 1rem;
+    }
+  
+    .user-greeting {
+      font-size: 1.2rem;
+    }
   }

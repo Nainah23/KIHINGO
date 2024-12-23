@@ -1,7 +1,7 @@
 // kihingo-frontend/src/pages/Feed.js;
 import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import axios from 'axios';
-import NotificationsPane from './components/NotificationsPane';
+import NotificationsPane from '../components/NotificationsPane';
 import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { MoreVertical, Bell, MessageCircle, ThumbsUp, Edit, Trash } from 'lucide-react';

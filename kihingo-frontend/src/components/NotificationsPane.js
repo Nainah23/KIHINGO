@@ -47,3 +47,6 @@ const NotificationsPane = ({ notifications, formatTimeElapsed }) => {
     </div>
   );
 };
+
+
+export default NotificationsPane;
