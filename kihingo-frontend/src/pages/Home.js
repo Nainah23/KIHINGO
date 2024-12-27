@@ -40,7 +40,12 @@ const Home = () => {
     { name: 'Live Stream', icon: FaVideo, path: '/livestream' },
     { name: 'Feed', icon: FaNewspaper, path: '/feed' },
     { name: 'Events', icon: FaCalendar, path: '/events' },
-    { name: 'Book an Appointment', icon: FaBookOpen, path: '/appointments' },
+    // Change label based on user role
+    { 
+      name: user?.role === 'reverend' ? 'Appointments' : 'Book an Appointment', 
+      icon: FaBookOpen, 
+      path: '/appointments' 
+    },
     { name: 'Make a Donation', icon: FaDonate, path: '/donations' },
     { name: 'Testimonials', icon: FaComments, path: '/testimonials' },
   ];

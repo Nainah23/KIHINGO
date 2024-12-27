@@ -1,33 +1,58 @@
-.header {
-  display: flex;
-  justify-content: space-between; /* Keeps logo and menu in their positions */
-  align-items: center;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  height: 80px;
-}
+// BACKEND/routes/appointmentRoutes.js
+// Update the PUT route for appointment status changes
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const appointment = await Appointment.findById(req.params.id)
+      .populate('user', 'name');
 
-.logo-link {
-  margin-left: 1rem; /* Logo stays on the left */
-}
+    if (!appointment) {
+      return res.status(404).json({ msg: 'Appointment not found' });
+    }
 
-.user-greeting {
-  position: absolute; /* Position greeting relative to the header */
-  left: 50%; /* Horizontally center based on the header */
-  transform: translateX(-50%); /* Correct centering by shifting half of its width */
-  font-size: 28px;
-  font-weight: bold;
-  background: linear-gradient(45deg, #ff6b6b, #feca57, #1dd1a1, #5f27cd);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+    if (req.user.role !== 'reverend') {
+      return res.status(403).json({ msg: 'Not authorized to update appointment status' });
+    }
 
-.user-menu {
-  margin-right: 1rem; /* Dropdown menu stays on the right */
-}
+    appointment.status = status;
+    await appointment.save();
+
+    // Create notification for the user
+    const notification = new Notification({
+      user: appointment.user._id,
+      type: 'appointment',
+      post: appointment._id,
+      postModel: 'Appointment',
+      creator: req.user.id,
+      content: `Your appointment has been ${status} by the reverend.`
+    });
+
+    await notification.save();
+
+    res.json(appointment);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Add a new route to check and update past-due appointments
+router.post('/update-status', authMiddleware, async (req, res) => {
+  try {
+    const now = new Date();
+    const pastDueAppointments = await Appointment.find({
+      date: { $lt: now },
+      status: { $in: ['pending', 'approved'] }
+    });
+
+    for (const appointment of pastDueAppointments) {
+      appointment.status = 'completed';
+      await appointment.save();
+    }
+
+    res.json({ msg: 'Appointment statuses updated' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});

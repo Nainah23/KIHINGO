@@ -1,7 +1,8 @@
-// src/pages/Appointments.js;
+// src/pages/Appointments.js
 import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import '../styles/Appointments.css';
+import ReverendAppointments from './ReverendAppointments'; // Correct import
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -131,16 +132,26 @@ const Appointments = () => {
         body: JSON.stringify({ reason, date })
       });
 
-      if (!res.ok) throw new Error('Failed to book appointment');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.msg || 'Failed to book appointment');
+      }
 
-      await fetchAppointments();
+      const data = await res.json();
+      setAppointments((prev) => [...prev, data.appointment]); // Append new appointment to the state
       setReason('');
       setDate('');
       setIsFormVisible(false);
     } catch (err) {
       console.error('Error booking appointment:', err);
+      alert('Could not book appointment: ' + err.message); // Display error to the user
     }
   };
+
+  // Role-based rendering
+  if (userProfile.role === 'reverend') {
+    return <ReverendAppointments />;
+  }
 
   return (
     <div className="appointments-container">

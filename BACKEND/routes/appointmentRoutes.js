@@ -35,13 +35,13 @@ router.get('/reverend', authMiddleware, async (req, res) => {
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { status } = req.body;
-    const appointment = await Appointment.findById(req.params.id);
+    const appointment = await Appointment.findById(req.params.id)
+      .populate('user', 'name');
 
     if (!appointment) {
       return res.status(404).json({ msg: 'Appointment not found' });
     }
 
-    // Check if user is the reverend
     if (req.user.role !== 'reverend') {
       return res.status(403).json({ msg: 'Not authorized to update appointment status' });
     }
@@ -49,7 +49,40 @@ router.put('/:id', authMiddleware, async (req, res) => {
     appointment.status = status;
     await appointment.save();
 
+    // Create notification for the user
+    const notification = new Notification({
+      user: appointment.user._id,
+      type: 'appointment',
+      post: appointment._id,
+      postModel: 'Appointment',
+      creator: req.user.id,
+      content: `Your appointment has been ${status} by the reverend.`
+    });
+
+    await notification.save();
+
     res.json(appointment);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Add a new route to check and update past-due appointments
+router.post('/update-status', authMiddleware, async (req, res) => {
+  try {
+    const now = new Date();
+    const pastDueAppointments = await Appointment.find({
+      date: { $lt: now },
+      status: { $in: ['pending', 'approved'] }
+    });
+
+    for (const appointment of pastDueAppointments) {
+      appointment.status = 'completed';
+      await appointment.save();
+    }
+
+    res.json({ msg: 'Appointment statuses updated' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -78,25 +111,18 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Book an appointment
+// Book an appointment 
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { reason, date } = req.body;
 
     // Find the reverend
     const reverend = await User.findOne({ role: 'reverend' });
-    if (reverend) {
-      await Notification.create({
-        user: reverend._id,
-        type: 'appointment',
-        post: appointment._id,
-        postModel: 'Appointment',
-        creator: req.user.id
-      });
-    } else {
+    if (!reverend) {
       return res.status(404).json({ msg: 'No reverend found in the system' });
     }
 
+    // Create a new appointment
     const newAppointment = new Appointment({
       user: req.user.id,
       appointmentWith: reverend._id,
@@ -106,22 +132,31 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const appointment = await newAppointment.save();
 
-    // Create notification for the reverend
+    // Create a notification for the reverend
     const notification = new Notification({
       user: reverend._id,
       type: 'appointment',
-      post: appointment._id,
+      post: appointment._id, // Use `appointment._id` here
+      postModel: 'Appointment',
       creator: req.user.id
     });
 
     await notification.save();
 
-    res.json(appointment);
+    res.json({
+      success: true,
+      appointment: {
+        id: appointment._id,
+        reason: appointment.reason,
+        date: appointment.date,
+        status: 'Pending'
+      }
+    });
   } catch (err) {
-    console.error(err.message);
-    console.log("Noma kwa booking", err);
+    console.error('Error booking appointment:', err);
     res.status(500).send('Server Error');
   }
 });
+
 
 module.exports = router;
