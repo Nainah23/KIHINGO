@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useContext, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../contexts/AuthContext';
+
 const Donations = () => {
   const [amount, setAmount] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -26,7 +27,6 @@ const Donations = () => {
       setUserProfile({});
     }
   }, [user?.username]);
-
 
   const fetchRandomBibleVerse = useCallback(async () => {
     try {
@@ -106,12 +106,12 @@ const Donations = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="min-h-screen bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 text-white p-6">
       {/* Bible Verse Scroll */}
-      <div className="bible-verse-scroll">
-        <p 
+      <div className="text-center mb-8 bg-white bg-opacity-40 p-4 rounded-lg shadow-lg">
+        <p
           ref={verseRef}
-          className="scrolling-verse text-xl text-gray-700 font-serif"
+          className="scrolling-verse text-2xl font-serif font-semibold"
           onAnimationEnd={handleScrollEnd}
         >
           {randomVerse}
@@ -119,44 +119,53 @@ const Donations = () => {
       </div>
 
       {/* Welcome Message */}
-      <div className="welcome-message-section text-center mb-8">
-        <h3 className="text-2xl font-semibold text-blue-600">{displayWelcomeMessage}</h3>
+      <div className="text-center mb-12">
+        <h3 className="text-3xl font-semibold text-yellow-300">
+          {displayWelcomeMessage}
+        </h3>
       </div>
 
       {/* Donation Form */}
-      <div className="donation-form bg-white p-6 rounded-lg shadow-md">
+      <div className="max-w-lg mx-auto bg-white bg-opacity-70 p-8 rounded-lg shadow-xl backdrop-blur-md">
         <form onSubmit={handleDonation}>
-          <div className="mb-4">
-            <label htmlFor="amount" className="block text-gray-700 font-medium">Donation Amount</label>
+          <div className="mb-6">
+            <label htmlFor="amount" className="block text-gray-800 font-medium text-xl mb-2">Donation Amount</label>
             <input
               type="number"
               id="amount"
-              className="w-full p-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full p-4 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-xl"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
             />
           </div>
 
-          <div className="mb-4">
-            <label htmlFor="phoneNumber" className="block text-gray-700 font-medium">Phone Number (MPESA)</label>
+          <div className="mb-6">
+            <label htmlFor="phoneNumber" className="block text-gray-800 font-medium text-xl mb-2">Phone Number (MPESA)</label>
             <input
               type="tel"
               id="phoneNumber"
-              className="w-full p-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full p-4 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-xl"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               required
             />
           </div>
 
-          <button 
-            type="submit" 
-            className="w-full p-3 mt-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none"
+          <button
+            type="submit"
+            className="w-full p-4 mt-4 bg-blue-600 text-white text-xl font-semibold rounded-lg hover:bg-blue-700 focus:outline-none transform transition duration-300"
           >
             Donate Now
           </button>
         </form>
+      </div>
+
+      {/* Footer Section */}
+      <div className="text-center mt-12">
+        <p className="text-sm text-white font-light">
+          By donating, you're helping us build a brighter future. Thank you for your support!
+        </p>
       </div>
     </div>
   );
