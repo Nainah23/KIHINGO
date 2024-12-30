@@ -1,16 +1,13 @@
-// kihingo-frontend/src/components/Header.js;
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { FaHome, FaVideo, FaNewspaper, FaCalendar, FaBookOpen, FaDonate, FaComments } from 'react-icons/fa';
-import '../styles/Header.css';
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Ref to check if click is inside the dropdown
   const dropdownRef = useRef(null);
 
   const navItems = [
@@ -38,7 +35,6 @@ const Header = () => {
     }
   };
 
-  // Add event listener to detect clicks outside dropdown
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
@@ -51,52 +47,52 @@ const Header = () => {
 
     if (requiresAuth && !user) {
       return (
-        <Link to="/login" state={{ from: item.path }} className="dropdown-button">
-          <item.icon className="icon" />
+        <Link to="/login" state={{ from: item.path }} className="flex items-center p-4 text-gray-700 hover:bg-gray-100">
+          <item.icon className="mr-2" />
           {item.name}
         </Link>
       );
     }
     return (
-      <Link to={item.path} className="dropdown-button">
-        <item.icon className="icon" />
+      <Link to={item.path} className="flex items-center p-4 text-gray-700 hover:bg-gray-100">
+        <item.icon className="mr-2" />
         {item.name}
       </Link>
     );
   };
 
   return (
-    <header className="header">
-      <Link to="/" className="logo-link">
-        <img src="/ACKlogo.jpg" alt="Church Logo" className="church-logo" />
+    <header className="flex justify-between items-center p-4 bg-gray-100 shadow-md fixed top-0 left-0 right-0 z-10 h-20">
+      <Link to="/" className="flex-none">
+        <img src="/ACKlogo.jpg" alt="Church Logo" className="h-12 w-auto" />
       </Link>
-      <div className="right-section">
+      <div className="flex items-center gap-8">
         {user && (
-          <div className="user-greeting">
+          <div className="text-center font-bold text-transparent bg-gradient-to-r from-pink-500 via-yellow-400 to-green-500 bg-clip-text">
             Hello, {user.name.split(' ')[0]}
           </div>
         )}
-        <div className="user-menu">
+        <div className="relative">
           {user ? (
-            <div className="dropdown" ref={dropdownRef}>
-              <button onClick={toggleMenu} className="user-button">
+            <div className="relative" ref={dropdownRef}>
+              <button onClick={toggleMenu} className="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-sm">
                 {user.name ? user.name.substring(0, 2).toUpperCase() : 'UN'}
               </button>
               {isMenuOpen && (
-                <div className="dropdown-menu">
+                <div className="absolute right-0 bg-white border border-gray-300 rounded-lg shadow-lg min-w-[200px] z-20 mt-2">
                   {navItems.map((item) => (
                     <DropdownButton key={item.name} item={item} />
                   ))}
-                  <button onClick={handleLogout} className="dropdown-button">
+                  <button onClick={handleLogout} className="flex items-center p-4 text-gray-700 hover:bg-gray-100">
                     Logout
                   </button>
                 </div>
               )}
             </div>
           ) : (
-            <div className="auth-buttons">
-              <Link to="/login" className="login-button">Login</Link>
-              <Link to="/register" className="signup-button">Sign Up</Link>
+            <div className="flex gap-4">
+              <Link to="/login" className="bg-blue-500 text-white p-2 rounded">Login</Link>
+              <Link to="/register" className="bg-green-500 text-white p-2 rounded">Sign Up</Link>
             </div>
           )}
         </div>

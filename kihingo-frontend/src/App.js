@@ -24,7 +24,8 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Header />    
+       <Header />
+       <div className="pt-20">
         <Routes> {/* Use Routes instead of Switch */}
           <Route path="/" element={<Home />} />
           <Route path="/feed" element={<Feed />} />
@@ -39,6 +40,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/church_groups" element={<ChurchGroups />} />
         </Routes>
+        </div>
         <Footer />
       </Router>
     </AuthProvider>
