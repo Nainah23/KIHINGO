@@ -6,7 +6,6 @@ import { AuthContext } from '../contexts/AuthContext';
 import { Edit, Trash, MoreVertical } from 'lucide-react';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
-import '../styles/SinglePost.css';
 
 const formatTimeElapsed = (date) => {
   const now = new Date();
@@ -355,7 +354,7 @@ const SinglePost = () => {
             >
               <span className="text-2xl">👍</span>
               <span className="font-medium">
-                {post.reactions.length} {post.reactions.length === 1 ? 'reaction' : 'reactions'}
+                {post.reactions.length} {/*post.reactions.length === 1 ? 'reaction' : 'reactions'*/}
               </span>
             </button>
           </div>
