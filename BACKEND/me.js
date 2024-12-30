@@ -1,42 +1,39 @@
-// In your reaction handler
-router.post('/:id/react', authMiddleware, async (req, res) => {
-  try {
-    const { type, action } = req.body; // 'like' or emoji
-    const feed = await Feed.findById(req.params.id);
+const SinglePost = () => {
+  // ... existing imports and state ...
 
-    if (!feed) return res.status(404).json({ msg: 'Feed post not found' });
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 py-8 px-4">
+      <div className="max-w-3xl mx-auto">
+        {/* ... Back button ... */}
+        
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 transform transition-all duration-500 hover:shadow-2xl animate-slideUp">
+          {/* ... User info section ... */}
+          
+          <p className="text-lg text-gray-800 mb-6">{post.content}</p>
 
-    // Check if the user already reacted
-    const existingReactionIndex = feed.reactions.findIndex(r => r.user.toString() === req.user.id);
-    
-    if (existingReactionIndex !== -1) {
-      // Remove previous reaction if it's the same type or update it
-      if (feed.reactions[existingReactionIndex].type === type) {
-        feed.reactions.splice(existingReactionIndex, 1); // Remove reaction
-      } else {
-        feed.reactions[existingReactionIndex].type = type; // Update to new reaction type
-      }
-    } else {
-      // Add the new reaction
-      const reaction = { user: req.user.id, type };
-      feed.reactions.push(reaction);
+          <div className="flex items-center mb-6">
+            <button 
+              onClick={handleReaction}
+              className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors"
+            >
+              <span className="text-2xl">👍</span>
+              <span className="font-medium">
+                {post.reactions.length} {post.reactions.length === 1 ? 'reaction' : 'reactions'}
+              </span>
+            </button>
+          </div>
 
-      // Create notification for post owner if it's a new reaction
-      if (action === 'add' && feed.user.toString() !== req.user.id) {
-        await Notification.create({
-          user: feed.user,
-          type: 'like',
-          post: feed._id,
-          postModel: 'Feed',
-          creator: req.user.id
-        });
-      }
-    }
+          {user && (
+            <form onSubmit={handleCommentSubmit} className="mb-8">
+              {/* ... Comment form ... */}
+            </form>
+          )}
 
-    await feed.save();
-    return res.json({ reactions: feed.reactions });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).send('Server Error');
-  }
-});
+          {/* ... Comments section ... */}
+        </div>
+      </div>
+      
+      {/* ... Edit modal ... */}
+    </div>
+  );
+};

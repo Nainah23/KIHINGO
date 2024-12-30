@@ -48,37 +48,46 @@ const EditPostModal = ({ post, onClose, onUpdate }) => {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <form onSubmit={handleSubmit}>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+      <div className="bg-white rounded-xl p-6 w-full max-w-2xl transform transition-all duration-300 ease-out hover:scale-[1.02] shadow-2xl">
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          onUpdate(post._id, content);
+        }}>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="edit-textarea"
+            className="w-full p-4 border rounded-lg mb-4 min-h-[150px] resize-y focus:ring-2 focus:ring-purple-500 transition-all duration-300"
           />
-          <div className="emoji-input-container">
+          <div className="flex justify-between items-center">
             <button 
               type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="emoji-button"
+              className="text-2xl hover:scale-110 transition-transform duration-200"
             >
               😊
             </button>
-            {showEmojiPicker && (
-              <div className="emoji-picker-container" ref={emojiPickerRef}>
-                <Picker 
-                  data={data} 
-                  onEmojiSelect={(emoji) => {
-                    setContent(prev => prev + emoji.native);
-                  }} 
-                />
-              </div>
-            )}
+            <div className="space-x-4">
+              <button type="submit" className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transform hover:scale-105 transition-all duration-200">
+                Update
+              </button>
+              <button 
+                type="button"
+                onClick={onClose}
+                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transform hover:scale-105 transition-all duration-200"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-          <div className="modal-buttons">
-            <button type="submit" className="update-button">Update</button>
-            <button type="button" onClick={onClose} className="cancel-button">Cancel</button>
-          </div>
+          {showEmojiPicker && (
+            <div className="absolute mt-2">
+              <Picker data={data} onEmojiSelect={(emoji) => {
+                setContent(prev => prev + emoji.native);
+                setShowEmojiPicker(false);
+              }} />
+            </div>
+          )}
         </form>
       </div>
     </div>
@@ -117,11 +126,17 @@ const SinglePost = () => {
 
   const fetchPost = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/feed/${id}?sort=-createdAt`);
-      setPost(res.data);
+      const res = await axios.get(`http://localhost:8000/api/feed/${id}`);
+      const sortedComments = {
+        ...res.data,
+        comments: res.data.comments.sort((a, b) => 
+          new Date(b.createdAt) - new Date(a.createdAt)
+        )
+      };
+      setPost(sortedComments);
     } catch (err) {
       console.error(err);
-      if (err.response && err.response.status === 404) {
+      if (err.response?.status === 404) {
         alert('Post not found');
         navigate('/feed');
       }
@@ -145,19 +160,12 @@ const SinglePost = () => {
 
       setPost(prevPost => ({
         ...prevPost,
-        comments: [
-          ...prevPost.comments,
-          {
-            _id: res.data._id,
-            content: comment,
-            user: {
-              _id: user._id,
-              name: user.name,
-              username: user.username
-            },
-            createdAt: new Date().toISOString()
-          }
-        ]
+        comments: [{
+          _id: res.data._id,
+          content: comment,
+          user: user,
+          createdAt: new Date().toISOString()
+        }, ...prevPost.comments]
       }));
 
       setComment('');
@@ -281,203 +289,211 @@ const SinglePost = () => {
     }
   };
 
-  if (!post) return <div>Loading...</div>;
+  if (!post) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500"></div>
+    </div>
+  );
 
   return (
-    <div className="single-post-container">
-      <button className="back-button" onClick={() => navigate('/feed')}>
-        Back to Feed
-      </button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 py-8 px-4">
+      <div className="max-w-3xl mx-auto">
+        <button 
+          onClick={() => navigate('/feed')}
+          className="mb-8 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+        >
+          ← Back to Feed
+        </button>
 
-      <div className="post-content">
-        <div className="post-header">
-          <div className="user-info">
-            <span className="author-name">{post.user.name}</span>
-            <span 
-              className="author-username"
-              onClick={(e) => handleUserClick(e, post.user.username)}
-              style={{ cursor: 'pointer' }}
-            >
-              @{post.user.username}
-            </span>
-            <span className="post-time">
-              {formatTimeElapsed(post.createdAt)}
-            </span>
-          </div>
-          {user && (user._id === post.user._id || user.role === 'admin') && (
-            <div className="post-actions">
-              <button 
-                onClick={() => setActiveDropdown(activeDropdown ? null : 'post')}
-                className="action-button"
-              >
-                <MoreVertical size={20} />
-              </button>
-              {activeDropdown === 'post' && (
-                <div className="dropdown">
-                  <button 
-                    onClick={() => setIsEditingPost(true)}
-                    className="dropdown-button"
-                  >
-                    <Edit size={16} className="dropdown-icon" />
-                    Edit
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(post._id)}
-                    className="dropdown-button"
-                  >
-                    <Trash size={16} className="dropdown-icon" />
-                    Delete
-                  </button>
-                </div>
-              )}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 transform transition-all duration-500 hover:shadow-2xl animate-slideUp">
+          <div className="flex justify-between items-start mb-6">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold text-purple-800">{post.user.name}</h2>
+              <p className="text-gray-600 cursor-pointer hover:text-purple-600 transition-colors">
+                @{post.user.username}
+              </p>
+              <p className="text-gray-500 text-sm">{formatTimeElapsed(post.createdAt)}</p>
             </div>
-          )}
-        </div>
-
-        {isEditingPost ? (
-          <EditPostModal
-            post={post}
-            onClose={() => setIsEditingPost(false)}
-            onUpdate={handlePostUpdate}
-          />
-        ) : (
-          <>
-            <p className="post-body">{post.content}</p>
-
-            {post.attachments && post.attachments.length > 0 && (
-              <div className="attachments">
-                {post.attachments.map((attachment, index) => (
-                  <img 
-                    key={index} 
-                    src={attachment} 
-                    alt="Attachment" 
-                    className="attachment-image"
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        <div className="reaction-section">
-          <button 
-            onClick={handleReaction}
-            className="reaction-button"
-          >
-            👍 {post.reactions.length}
-          </button>
-        </div>
-
-        {user && (
-          <form onSubmit={handleCommentSubmit} className="comment-form">
-            <div className="comment-input-wrapper">
-              <div className="emoji-input-container">
+            
+            {user && (user._id === post.user._id || user.role === 'admin') && (
+              <div className="relative">
                 <button 
-                  type="button"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="emoji-button"
+                  onClick={() => setActiveDropdown(activeDropdown ? null : 'post')}
+                  className="p-2 hover:bg-purple-100 rounded-full transition-colors"
                 >
-                  😊
+                  <MoreVertical className="w-5 h-5 text-gray-600" />
                 </button>
-                {showEmojiPicker && (
-                  <div className="emoji-picker-container" ref={emojiPickerRef}>
-                    <Picker data={data} onEmojiSelect={onEmojiSelect} />
+                
+                {activeDropdown === 'post' && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 animate-fadeIn">
+                    <button 
+                      onClick={() => setIsEditingPost(true)}
+                      className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-purple-50 transition-colors"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(post._id)}
+                      className="flex items-center w-full px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash className="w-4 h-4 mr-2" />
+                      Delete
+                    </button>
                   </div>
                 )}
               </div>
-              <input
-                type="text"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Add a comment..."
-                className="comment-input"
-                ref={commentInputRef}
-              />
-            </div>
-            <button type="submit" className="submit-button">
-              Comment
-            </button>
-          </form>
-        )}
+            )}
+          </div>
 
-        <div className="comments-section">
-          <h3>Comments</h3>
-          {post.comments.map((comment) => (
-            <div key={comment._id} className="comment">
-              <div className="comment-header">
-                <span className="comment-user-name">{comment.user.name}</span>
-                <span 
-                  className="comment-user-username"
-                  onClick={(e) => handleUserClick(e, comment.user.username)}
-                  style={{ display: 'block', cursor: 'pointer', color: 'gray' }}
-                >
-                  @{comment.user.username}
-                </span>
-              </div>
-              <span className="comment-time">{formatTimeElapsed(comment.createdAt)}</span>
-              {user && (user._id === comment.user._id || user.role === 'admin') && (
-                <div className="comment-actions">
+          <p className="text-lg text-gray-800 mb-6">{post.content}</p>
+
+          <div className="flex items-center mb-6">
+            <button 
+              onClick={handleReaction}
+              className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors"
+            >
+              <span className="text-2xl">👍</span>
+              <span className="font-medium">
+                {post.reactions.length} {post.reactions.length === 1 ? 'reaction' : 'reactions'}
+              </span>
+            </button>
+          </div>
+
+          {user && (
+            <form onSubmit={handleCommentSubmit} className="mb-8">
+              <div className="flex gap-4">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Add a comment..."
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                  />
                   <button 
-                    onClick={() => setActiveDropdown(activeDropdown === comment._id ? null : comment._id)}
-                    className="action-button"
+                    type="button"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xl hover:scale-110 transition-transform duration-200"
                   >
-                    <MoreVertical size={16} />
+                    😊
                   </button>
-                  {activeDropdown === comment._id && (
-                    <div className="dropdown">
+                </div>
+                <button 
+                  type="submit"
+                  className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  Comment
+                </button>
+              </div>
+              {showEmojiPicker && (
+                <div className="absolute mt-2 z-50" ref={emojiPickerRef}>
+                  <Picker 
+                    data={data} 
+                    onEmojiSelect={(emoji) => {
+                      setComment(prev => prev + emoji.native);
+                      setShowEmojiPicker(false);
+                    }}
+                  />
+                </div>
+              )}
+            </form>
+          )}
+
+          <div className="space-y-6">
+            <h3 className="text-xl font-semibold text-purple-800 mb-4">Comments</h3>
+            {post.comments.map((comment, index) => (
+              <div 
+                key={comment._id}
+                className="bg-gray-50 rounded-lg p-4 transform transition-all duration-300 hover:scale-[1.01] hover:shadow-md animate-slideIn"
+                style={{
+                  animationDelay: `${index * 100}ms`
+                }}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold text-purple-800">{comment.user.name}</p>
+                    <p className="text-gray-600 text-sm">@{comment.user.username}</p>
+                    <p className="text-gray-500 text-xs mt-1">{formatTimeElapsed(comment.createdAt)}</p>
+                  </div>
+                  
+                  {user && (user._id === comment.user._id || user.role === 'admin') && (
+                    <div className="relative">
                       <button 
-                        onClick={() => {
-                          setEditingCommentId(comment._id);
-                          setEditedComment(comment.content);
-                        }}
-                        className="dropdown-button"
+                        onClick={() => setActiveDropdown(activeDropdown === comment._id ? null : comment._id)}
+                        className="p-1 hover:bg-purple-100 rounded-full transition-colors"
                       >
-                        <Edit size={16} className="dropdown-icon" />
-                        Edit
+                        <MoreVertical className="w-4 h-4 text-gray-600" />
                       </button>
-                      <button 
-                        onClick={() => handleCommentDelete(comment._id)}
-                        className="dropdown-button"
-                      >
-                        <Trash size={16} className="dropdown-icon" />
-                        Delete
-                      </button>
+                      
+                      {activeDropdown === comment._id && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 animate-fadeIn">
+                          <button 
+                            onClick={() => {
+                              setEditingCommentId(comment._id);
+                              setEditedComment(comment.content);
+                            }}
+                            className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-purple-50 transition-colors"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </button>
+                          <button 
+                            onClick={() => handleCommentDelete(comment._id)}
+                            className="flex items-center w-full px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <Trash className="w-4 h-4 mr-2" />
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          ))}
-
-          {editingCommentId !== null && (
-            <div className="edit-comment-form">
-              <input
-                type="text"
-                value={editedComment}
-                onChange={(e) => setEditedComment(e.target.value)}
-                className="edit-comment-input"
-              />
-              <div className="edit-comment-buttons">
-                <button 
-                  onClick={() => handleCommentEdit(editingCommentId, editedComment)}
-                  className="edit-button"
-                >
-                  Save
-                </button>
-                <button 
-                  onClick={() => {
-                    setEditingCommentId(null);
-                    setEditedComment('');
-                  }}
-                  className="cancel-button"
-                >
-                  Cancel
-                </button>
+                
+                <p className="mt-2 text-gray-800">{comment.content}</p>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
       </div>
+      
+      {isEditingPost && (
+        <EditPostModal
+          post={post}
+          onClose={() => setIsEditingPost(false)}
+          onUpdate={handlePostUpdate}
+        />
+      )}
+
+      <style jsx>{`
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(-20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        .animate-slideUp {
+          animation: slideUp 0.5s ease-out;
+        }
+        
+        .animate-slideIn {
+          animation: slideIn 0.5s ease-out;
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
