@@ -16,6 +16,7 @@ const Home = () => {
   const [randomVerse, setRandomVerse] = useState('');
   const scrollCount = useRef(0);
   const verseRef = useRef(null);
+  const progressBarRef = useRef(null); // Reference to progress bar
 
   const slides = [
     { title: "Our Church Groups", description: "Discover the diverse communities within our church", image: "/CHURCH.jpg" },
@@ -81,6 +82,15 @@ const Home = () => {
     }
   };
 
+  const handleScroll = () => {
+    const scrollTop = document.documentElement.scrollTop;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollProgress = (scrollTop / docHeight) * 100;
+    if (progressBarRef.current) {
+      progressBarRef.current.style.width = `${scrollProgress}%`;
+    }
+  };
+
   useEffect(() => {
     fetchRandomBibleVerse();
     const heading = "Welcome to ACK St. Philip's KIHINGO Church";
@@ -110,9 +120,12 @@ const Home = () => {
       }, 100);
     }, headingAnimationDuration);
   
+    window.addEventListener('scroll', handleScroll);
+  
     return () => {
       clearInterval(headingIntervalId);
       clearTimeout(subtitleTimeoutId);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [fetchRandomBibleVerse]);
 
@@ -122,20 +135,24 @@ const Home = () => {
       <nav className="sticky top-0 z-50 bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4">
           <ul className="flex justify-around items-center h-16">
-            {navItems.map(item => (
-              <li key={item.name}>
-                <Link 
-                  to={item.path} 
-                  className="flex items-center gap-2 px-4 py-2 text-orange-700 hover:text-emerald-600 transition-colors duration-300 font-medium"
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.name}</span>
+            {navItems.map((item, index) => (
+              <li key={index}>
+                <Link to={item.path} className="flex items-center text-lg font-semibold hover:text-blue-500">
+                  <item.icon className="mr-2" />
+                  {item.name}
                 </Link>
               </li>
             ))}
           </ul>
         </div>
       </nav>
+
+      {/* Progress Bar */}
+      <div
+        ref={progressBarRef}
+        className="fixed top-0 left-0 h-1 bg-blue-500"
+        style={{ width: '0%' }}
+      ></div>
 
       <main className="container mx-auto px-4 py-8">
         {/* Bible Verse Scroll */}
@@ -199,7 +216,7 @@ const Home = () => {
           {/* Testimonials Card */}
           <div className="bg-white rounded-lg shadow-lg p-6 hover:-translate-y-1 transition-transform duration-300">
             <h2 className="text-2xl font-bold mb-4 text-gray-800">Testimonials</h2>
-            <p className="text-gray-600 mb-6">Read inspiring stories from our community members.</p>
+            <p className="text-gray-600 mb-6">Explore powerful testimonies from fellow worshippers about how God is working in their lives!</p>
             <Link to="/testimonials" className="text-blue-500 font-bold hover:text-blue-700">
               View All Testimonials
             </Link>
