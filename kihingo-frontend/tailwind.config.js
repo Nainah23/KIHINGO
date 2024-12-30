@@ -4,6 +4,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        georgia: ['Georgia', 'serif'],
+      },
       animation: {
         scroll: 'scroll 15s linear',
       },
@@ -20,4 +23,3 @@ module.exports = {
     require('autoprefixer'),
   ],
 }
-

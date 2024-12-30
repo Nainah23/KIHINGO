@@ -1,265 +1,136 @@
-// BACKEND/routes/livestreamRoutes.js
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
 
-// Update the transport creation endpoint to properly handle auth and validate input
-router.post('/transport', authMiddleware, async (req, res) => {
-  try {
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({
-        success: false,
-        msg: 'User authentication required'
-      });
-    }
-
-    const { sctpCapabilities } = req.body;
-    
-    if (!sctpCapabilities) {
-      return res.status(400).json({
-        success: false,
-        msg: 'SCTP capabilities are required'
-      });
-    }
-
-    if (!mediaSoupRouter) {
-      await initializeMediaSoup();
-      if (!mediaSoupRouter) {
-        throw new Error('MediaSoup router initialization failed');
-      }
-    }
-
-    const transport = await mediaSoupRouter.createWebRtcTransport({
-      listenIps: [
-        {
-          ip: config.MEDIASOUP_LISTEN_IP,
-          announcedIp: config.MEDIASOUP_ANNOUNCED_IP
-        }
-      ],
-      enableUdp: true,
-      enableTcp: true,
-      preferUdp: true,
-      initialAvailableOutgoingBitrate: 1000000,
-      enableSctp: true,
-      numSctpStreams: sctpCapabilities
-    });
-
-    // Store transport in memory mapped to user
-    if (!global.userTransports) {
-      global.userTransports = new Map();
-    }
-    global.userTransports.set(req.user.id, transport);
-
-    res.json({
-      success: true,
-      data: {
-        id: transport.id,
-        iceParameters: transport.iceParameters,
-        iceCandidates: transport.iceCandidates,
-        dtlsParameters: transport.dtlsParameters,
-        sctpParameters: transport.sctpParameters
-      }
-    });
-  } catch (error) {
-    console.error('Transport creation error:', error);
-    res.status(500).json({ 
-      success: false, 
-      msg: 'Failed to create transport',
-      error: error.message 
-    });
-  }
-});
-
-// Update the stream joining endpoint
-router.put('/:streamId/status', authMiddleware, async (req, res) => {
-  try {
-    const { streamId } = req.params;
-    const { status, roomId } = req.body;
-
-    if (!streamId || !status || !roomId) {
-      return res.status(400).json({ 
-        success: false, 
-        msg: 'StreamId, status, and roomId are required.' 
-      });
-    }
-
-    // Verify user permissions
-    if (req.user.role !== 'admin' && req.user.role !== 'reverend') {
-      return res.status(403).json({ 
-        success: false, 
-        msg: 'Insufficient permissions' 
-      });
-    }
-
-    const livestream = await Livestream.findById(streamId);
-    
-    if (!livestream) {
-      return res.status(404).json({ 
-        success: false, 
-        msg: 'Livestream not found.' 
-      });
-    }
-
-    // Verify stream ownership or admin status
-    if (livestream.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ 
-        success: false, 
-        msg: 'Not authorized to modify this stream' 
-      });
-    }
-
-    // Update stream status
-    livestream.status = status;
-    livestream.roomId = roomId;
-    await livestream.save();
-
-    res.json({ 
-      success: true, 
-      data: livestream 
-    });
-  } catch (err) {
-    console.error('Error updating livestream status:', err);
-    res.status(500).json({ 
-      success: false, 
-      msg: 'Server Error', 
-      error: err.message 
-    });
-  }
-});
-
-// FRONTEND/src/components/BrowserStreaming.js
-const BrowserStreaming = ({ streamId, isPublisher, roomId }) => {  // Add roomId prop
-  // ... existing state declarations ...
-
-  const initializeStreaming = async () => {
+const Donations = () => {
+  const [amount, setAmount] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [randomVerse, setRandomVerse] = useState('');
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollCount = useRef(0);
+  const verseRef = useRef(null);
+  const [displayWelcomeMessage, setDisplayWelcomeMessage] = useState('');
+  
+  // Fetching random Bible verse
+  const fetchRandomBibleVerse = useCallback(async () => {
     try {
-      // Verify we have the required props
-      if (!streamId || !roomId) {
-        throw new Error('Stream ID and Room ID are required');
+      const res = await fetch('http://localhost:8000/api/bible-verse');
+      if (!res.ok) throw new Error('Failed to fetch Bible verse');
+      const data = await res.json();
+      if (!isScrolling) {
+        setRandomVerse(data.verse);
+        scrollCount.current = 0;
+        startScrollAnimation();
       }
+    } catch (error) {
+      console.error('Error fetching Bible verse:', error);
+    }
+  }, [isScrolling]);
 
-      // Get router RTP capabilities with error handling
-      const { data: response } = await api.get('/livestream/capabilities');
-      
-      if (!response.success || !response.data) {
-        throw new Error('Failed to get router capabilities');
-      }
-
-      // Create device with error handling
-      const newDevice = new Device();
-      await newDevice.load({ routerRtpCapabilities: response.data });
-      setDevice(newDevice);
-
-      if (isPublisher) {
-        await initializePublisher(newDevice);
-      } else {
-        await initializeViewer(newDevice);
-      }
-    } catch (err) {
-      console.error('Streaming initialization error:', err);
-      setError(`Failed to initialize streaming: ${err.message}`);
+  const startScrollAnimation = () => {
+    setIsScrolling(true);
+    if (verseRef.current) {
+      verseRef.current.style.animation = 'none';
+      void verseRef.current.offsetHeight;
+      verseRef.current.style.animation = 'scrollVerse 15s linear';
     }
   };
 
-  const initializePublisher = async (device) => {
-    try {
-      // Request user media with error handling
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true
-      }).catch(err => {
-        throw new Error(`Media access denied: ${err.message}`);
-      });
-
-      setStream(mediaStream);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-
-      // Create transport with error handling
-      const { data: response } = await api.post('/livestream/transport', {
-        sctpCapabilities: device.sctpCapabilities,
-        roomId: roomId  // Include roomId in transport creation
-      });
-
-      if (!response.success || !response.data) {
-        throw new Error('Failed to create transport');
-      }
-
-      const sendTransport = device.createSendTransport(response.data);
-      
-      // Set up transport event handlers
-      sendTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-        try {
-          const { data: connectResponse } = await api.post(
-            `/livestream/transport/${sendTransport.id}/connect`,
-            { dtlsParameters }
-          );
-
-          if (!connectResponse.success) {
-            throw new Error('Transport connection failed');
-          }
-          
-          callback();
-        } catch (error) {
-          console.error('Transport connect error:', error);
-          errback(error);
-        }
-      });
-
-      // ... rest of the initializePublisher implementation ...
-    } catch (err) {
-      console.error('Publisher initialization error:', err);
-      setError(`Failed to initialize publisher: ${err.message}`);
-      throw err;  // Propagate error for proper handling
+  const handleScrollEnd = () => {
+    scrollCount.current += 1;
+    if (scrollCount.current < 2) {
+      startScrollAnimation();
+    } else {
+      setIsScrolling(false);
+      fetchRandomBibleVerse();
     }
   };
 
-  // ... rest of the component implementation ...
-};
+  useEffect(() => {
+    fetchRandomBibleVerse();
 
-// FRONTEND/src/pages/Livestream.js
-const joinStream = async (streamId, roomId) => {
-  if (!streamId || !roomId) {
-    setError('Stream ID and Room ID are required');
-    return;
-  }
+    if (!isAnimating) {
+      setIsAnimating(true);
+      const message = `🌟 Welcome, friend! Thank you for visiting ACK St Phillips Kihingo's Donation Page. Your generous support helps us continue our mission of faith and community. Would you like to make a donation today and make a difference? 🌟`;
+      setDisplayWelcomeMessage('');
 
-  const token = localStorage.getItem('token');
-  if (!token) {
-    setError('Authentication token is missing');
-    return;
-  }
-
-  try {
-    console.log(`Attempting to join stream: ${streamId} with room: ${roomId}`);
-
-    const response = await axios.put(
-      `http://localhost:8000/api/livestream/${streamId}/status`,
-      { 
-        status: 'streaming', 
-        roomId: roomId 
-      },
-      {
-        headers: {
-          'x-auth-token': token,
-          'Content-Type': 'application/json'
+      const animateMessage = async () => {
+        for (let i = 0; i <= message.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+          setDisplayWelcomeMessage(message.slice(0, i));
         }
-      }
-    );
+        setIsAnimating(false);
+      };
 
-    if (!response.data.success) {
-      throw new Error(response.data.msg || 'Failed to join stream');
+      animateMessage();
     }
+  }, [fetchRandomBibleVerse, isAnimating]);
 
-    console.log('Successfully joined stream with room ID:', roomId);
-    setActiveStream(streamId);
-    setRoomId(roomId);
-    
-    // Pass both streamId and roomId to BrowserStreaming
-    return { streamId, roomId };
-  } catch (err) {
-    console.error('Error joining stream:', err);
-    const errorMsg = err.response?.data?.msg || 'Failed to join livestream';
-    setError(errorMsg);
-    throw new Error(errorMsg);
-  }
+  const handleDonation = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post('http://localhost:8000/api/donations/initiate', { amount, phoneNumber });
+      console.log(res.data); // Handle MPESA STK Push response
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      {/* Bible Verse Scroll */}
+      <div className="bible-verse-scroll">
+        <p 
+          ref={verseRef}
+          className="scrolling-verse text-xl text-gray-700 font-serif"
+          onAnimationEnd={handleScrollEnd}
+        >
+          {randomVerse}
+        </p>
+      </div>
+
+      {/* Welcome Message */}
+      <div className="welcome-message-section text-center mb-8">
+        <h3 className="text-2xl font-semibold text-blue-600">{displayWelcomeMessage}</h3>
+      </div>
+
+      {/* Donation Form */}
+      <div className="donation-form bg-white p-6 rounded-lg shadow-md">
+        <form onSubmit={handleDonation}>
+          <div className="mb-4">
+            <label htmlFor="amount" className="block text-gray-700 font-medium">Donation Amount</label>
+            <input
+              type="number"
+              id="amount"
+              className="w-full p-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="phoneNumber" className="block text-gray-700 font-medium">Phone Number (MPESA)</label>
+            <input
+              type="tel"
+              id="phoneNumber"
+              className="w-full p-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              required
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            className="w-full p-3 mt-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none"
+          >
+            Donate Now
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 };
+
+export default Donations;
