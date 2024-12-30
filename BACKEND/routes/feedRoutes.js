@@ -162,6 +162,7 @@ router.post('/:id/react', authMiddleware, async (req, res) => {
           user: feed.user,
           type: 'like',
           post: feed._id,
+          postModel: 'Feed',
           creator: req.user.id
         });
       }
@@ -194,6 +195,7 @@ router.post('/:id/comment', authMiddleware, async (req, res) => {
         user: feed.user,
         type: 'comment',
         post: feed._id,
+        postModel: 'Feed',
         creator: req.user.id
       });
     }

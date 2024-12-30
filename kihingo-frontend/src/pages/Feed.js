@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import { MoreVertical, Bell, MessageCircle, ThumbsUp, Edit, Trash } from 'lucide-react';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
-import '../styles/Feed.css';
 
 // Utility functions
 const formatTimeElapsed = (date) => {
@@ -255,49 +254,58 @@ const EditPostModal = ({ post, onClose, onUpdate }) => {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl transform transition-all duration-300 ease-in-out" 
+           onClick={e => e.stopPropagation()}>
         <form onSubmit={handleSubmit}>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="edit-textarea"
+            className="w-full p-4 border rounded-lg mb-4 min-h-[150px] resize-y focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             placeholder="What's on your mind?"
           />
-          <button 
-            type="button"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className="emoji-button"
-          >
-            😊
-          </button>
+          <div className="flex justify-between items-center">
+            <button 
+              type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="text-2xl hover:scale-110 transition-transform duration-200"
+            >
+              😊
+            </button>
+            <div className="space-x-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
+              >
+                Update
+              </button>
+              <button 
+                type="button"
+                onClick={onClose}
+                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transform hover:scale-105 transition-all duration-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
           {showEmojiPicker && (
-            <div className="emoji-picker-container">
+            <div className="absolute mt-2">
               <Picker 
                 data={data} 
                 onEmojiSelect={(emoji) => {
                   setContent(prev => prev + emoji.native);
                   setShowEmojiPicker(false);
-                }} 
+                }}
               />
             </div>
           )}
-          <div className="modal-buttons">
-          <button type="submit" className="update-button">Update</button>
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="cancel-button"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-          </div>
         </form>
       </div>
-      </div>
-    );
-  };
+    </div>
+  );
+};
+
 
 // Main Feed Component
 const Feed = () => {
@@ -593,21 +601,23 @@ const Feed = () => {
   if (error) return <div className="error-message">{error}</div>;
 
   return (
-    <div className="feed-container">
-      <div className="sidebar">
-        <div className="user-profile">
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <div className="w-80 bg-purple-100 p-6 shadow-lg transform transition-all duration-300 hover:shadow-xl">
+        <div className="text-center mb-8">
           <img
             src={userProfileImage}
             alt="User Profile"
-            className="profile-image"
+            className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-white shadow-lg transform hover:scale-105 transition-all duration-300"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = '/default-profile.png';
             }}
           />
-          <h3 className="user-name">{user.name || 'Guest'}</h3>
-          <p className="user-info">@{user.username || 'guest'}</p>
+          <h3 className="text-xl font-bold text-purple-800">{user.name || 'Guest'}</h3>
+          <p className="text-purple-600">@{user.username || 'guest'}</p>
         </div>
+
         <NotificationsPane 
           notifications={notifications}
           formatTimeElapsed={formatTimeElapsed}
