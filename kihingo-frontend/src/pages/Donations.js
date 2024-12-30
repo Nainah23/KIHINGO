@@ -33,7 +33,6 @@ const Donations = () => {
       const res = await fetch('http://localhost:8000/api/bible-verse');
       if (!res.ok) throw new Error('Failed to fetch Bible verse');
       const data = await res.json();
-      // Only update verse if not currently scrolling
       if (!isScrolling) {
         setRandomVerse(data.verse);
         scrollCount.current = 0;
@@ -48,7 +47,6 @@ const Donations = () => {
     setIsScrolling(true);
     if (verseRef.current) {
       verseRef.current.style.animation = 'none';
-      // Properly trigger reflow
       void verseRef.current.offsetHeight;
       verseRef.current.style.animation = 'scrollVerse 15s linear';
     }
@@ -57,10 +55,8 @@ const Donations = () => {
   const handleScrollEnd = () => {
     scrollCount.current += 1;
     if (scrollCount.current < 2) {
-      // Start another scroll cycle
       startScrollAnimation();
     } else {
-      // After two complete scrolls, fetch new verse
       setIsScrolling(false);
       fetchRandomBibleVerse();
     }
@@ -86,19 +82,12 @@ const Donations = () => {
 
       animateMessage();
     }
-  }, [
-    fetchUserProfile,
-    fetchRandomBibleVerse,
-    userProfile.name,
-    user?.username,
-    isAnimating
-  ]);
+  }, [fetchUserProfile, fetchRandomBibleVerse, userProfile.name, user?.username, isAnimating]);
 
   const handleDonation = async (e) => {
     e.preventDefault();
     try {
       const res = await axios.post('http://localhost:8000/api/donations/initiate', { amount, phoneNumber });
-      // Handle the response from MPESA STK Push
       console.log(res.data);
     } catch (err) {
       console.error(err);
@@ -106,12 +95,12 @@ const Donations = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 text-white p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100">
       {/* Bible Verse Scroll */}
-      <div className="text-center mb-8 bg-white bg-opacity-40 p-4 rounded-lg shadow-lg">
+      <div className="bible-verse-scroll mb-6">
         <p
           ref={verseRef}
-          className="scrolling-verse text-2xl font-serif font-semibold"
+          className="scrolling-verse text-lg text-gray-600 font-serif"
           onAnimationEnd={handleScrollEnd}
         >
           {randomVerse}
@@ -119,42 +108,46 @@ const Donations = () => {
       </div>
 
       {/* Welcome Message */}
-      <div className="text-center mb-12">
-        <h3 className="text-3xl font-semibold text-yellow-300">
+      <div className="welcome-message-section text-center mb-8">
+        <h3 
+          className="text-2xl font-semibold text-transparent bg-clip-text 
+                    bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 
+                    animate-gradient-text"
+        >
           {displayWelcomeMessage}
         </h3>
       </div>
 
       {/* Donation Form */}
-      <div className="max-w-lg mx-auto bg-white bg-opacity-70 p-8 rounded-lg shadow-xl backdrop-blur-md">
+      <div className="donation-form bg-white p-6 rounded-lg shadow-lg max-w-lg mx-auto">
         <form onSubmit={handleDonation}>
-          <div className="mb-6">
-            <label htmlFor="amount" className="block text-gray-800 font-medium text-xl mb-2">Donation Amount</label>
+          <div className="mb-4">
+            <label htmlFor="amount" className="block text-gray-700 font-medium">Donation Amount</label>
             <input
               type="number"
               id="amount"
-              className="w-full p-4 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-xl"
+              className="w-full p-3 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
             />
           </div>
 
-          <div className="mb-6">
-            <label htmlFor="phoneNumber" className="block text-gray-800 font-medium text-xl mb-2">Phone Number (MPESA)</label>
+          <div className="mb-4">
+            <label htmlFor="phoneNumber" className="block text-gray-700 font-medium">Phone Number (MPESA)</label>
             <input
               type="tel"
               id="phoneNumber"
-              className="w-full p-4 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-xl"
+              className="w-full p-3 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               required
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full p-4 mt-4 bg-blue-600 text-white text-xl font-semibold rounded-lg hover:bg-blue-700 focus:outline-none transform transition duration-300"
+          <button 
+            type="submit" 
+            className="w-full p-3 mt-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none"
           >
             Donate Now
           </button>
@@ -163,7 +156,7 @@ const Donations = () => {
 
       {/* Footer Section */}
       <div className="text-center mt-12">
-        <p className="text-sm text-white font-light">
+        <p className="text-sm text-black font-light">
           By donating, you're helping us build a brighter future. Thank you for your support!
         </p>
       </div>
