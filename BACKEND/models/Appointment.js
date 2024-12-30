@@ -1,4 +1,3 @@
-// BACKEND/models/Appointment.js;
 const mongoose = require('mongoose');
 
 const AppointmentSchema = new mongoose.Schema({
@@ -7,10 +6,15 @@ const AppointmentSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  appointmentWith: {
-    type: mongoose.Schema.Types.ObjectId, // Change to ObjectId
-    ref: 'User', // Reference to User model
-    required: true
+  appointmentToRole: {
+    type: String,
+    required: true,
+    enum: ['reverend']
+  },
+  handledBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   },
   reason: {
     type: String,
@@ -18,7 +22,7 @@ const AppointmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'completed'],
+    enum: ['pending', 'approved', 'completed', 'cancelled'],
     default: 'pending'
   },
   date: {

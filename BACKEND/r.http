@@ -1,0 +1,24 @@
+### Register
+POST http://localhost:8000/api/auth/register
+Content-Type: application/json
+Connection: keep-alive
+
+{
+    "name": "Naina",
+    "email": "kamauwainaina29@gmail.com",
+    "password": "!123Four"
+}
+### Login
+POST http://localhost:8000/api/auth/login
+Content-Type: application/json
+Connection: keep-alive
+
+{
+    "username": "e",
+    "password": "1"
+}
+
+### Test Get All Appointments for the Reverend
+GET http://localhost:8000/api/appointments/reverend
+x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxOTI3YTEzMDdlNmI0YmVjODAzZTNiIiwicm9sZSI6InJldmVyZW5kIn0sImlhdCI6MTczNTMxMzAxOCwiZXhwIjoxNzM1MzE2NjE4fQ.FnhPItFKWOMF3KH694yjlyVCMPlfGTjtmDkX6vPwWvg
+Content-Type: application/json

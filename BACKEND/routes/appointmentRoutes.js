@@ -12,28 +12,33 @@ router.get('/', authMiddleware, async (req, res) => {
     const appointments = await Appointment.find({ user: req.user.id }).sort({ date: 1 });
     res.json(appointments);
   } catch (err) {
-    console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
 
-// Get all appointments for the reverend
+// Get all appointments for reverends
 router.get('/reverend', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'reverend') {
       return res.status(403).json({ msg: 'Not authorized' });
     }
-    const appointments = await Appointment.find({ appointmentWith: req.user.id }).sort({ date: 1 });
+    // Find all appointments made to reverend role
+    const appointments = await Appointment.find({ appointmentToRole: 'reverend' })
+      .sort({ date: 1 })
+      .populate('user', 'name email');
     res.json(appointments);
   } catch (err) {
-    console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
 
-// Update appointment status (for reverend only)
+// Update appointment status
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
+    if (req.user.role !== 'reverend') {
+      return res.status(403).json({ msg: 'Not authorized' });
+    }
+
     const { status } = req.body;
     const appointment = await Appointment.findById(req.params.id)
       .populate('user', 'name');
@@ -42,14 +47,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ msg: 'Appointment not found' });
     }
 
-    if (req.user.role !== 'reverend') {
-      return res.status(403).json({ msg: 'Not authorized to update appointment status' });
-    }
-
     appointment.status = status;
+    appointment.handledBy = req.user.id; // Track which reverend handled it
     await appointment.save();
 
-    // Create notification for the user
     const notification = new Notification({
       user: appointment.user._id,
       type: 'appointment',
@@ -60,10 +61,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
     });
 
     await notification.save();
-
     res.json(appointment);
   } catch (err) {
-    console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
@@ -111,37 +110,32 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Book an appointment 
+// Book an appointment
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { reason, date } = req.body;
 
-    // Find the reverend
-    const reverend = await User.findOne({ role: 'reverend' });
-    if (!reverend) {
-      return res.status(404).json({ msg: 'No reverend found in the system' });
-    }
-
-    // Create a new appointment
     const newAppointment = new Appointment({
       user: req.user.id,
-      appointmentWith: reverend._id,
+      appointmentToRole: 'reverend', // Store role instead of specific user
       reason,
-      date
+      date,
+      status: 'pending'
     });
 
     const appointment = await newAppointment.save();
 
-    // Create a notification for the reverend
-    const notification = new Notification({
-      user: reverend._id,
-      type: 'appointment',
-      post: appointment._id, // Use `appointment._id` here
-      postModel: 'Appointment',
-      creator: req.user.id
-    });
-
-    await notification.save();
+    // Notify all reverends
+    const reverends = await User.find({ role: 'reverend' });
+    await Promise.all(reverends.map(reverend => 
+      new Notification({
+        user: reverend._id,
+        type: 'appointment',
+        post: appointment._id,
+        postModel: 'Appointment',
+        creator: req.user.id
+      }).save()
+    ));
 
     res.json({
       success: true,
@@ -149,11 +143,10 @@ router.post('/', authMiddleware, async (req, res) => {
         id: appointment._id,
         reason: appointment.reason,
         date: appointment.date,
-        status: 'Pending'
+        status: 'pending'
       }
     });
   } catch (err) {
-    console.error('Error booking appointment:', err);
     res.status(500).send('Server Error');
   }
 });

@@ -15,8 +15,7 @@ const ReverendAppointments = () => {
         headers: { 'x-auth-token': localStorage.getItem('token') }
       });
       if (!res.ok) throw new Error('Failed to fetch appointments');
-      const data = await res.json();
-      
+      const data = await res.json();      
       const now = new Date();
       const sorted = data.sort((a, b) => new Date(a.date) - new Date(b.date));
       
@@ -85,7 +84,7 @@ const ReverendAppointments = () => {
       fetchRandomBibleVerse();
     }
   };
-  
+
   useEffect(() => {
     fetchAppointments();
     fetchRandomBibleVerse();

@@ -10,13 +10,18 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const notifications = await Notification.find({ user: req.user.id })
-      .populate('creator', 'name username profileImage')
-      .populate({
-        path: 'post',
-        select: 'content date time',
-      })
-      .sort({ createdAt: -1 })
-      .limit(10); // Limit to most recent 10 notifications
+  .populate('creator', 'name username profileImage')
+  .populate({
+    path: 'post',
+    select: 'content date time reason', // Add reason field
+    // Add this populate to get appointment details
+    populate: {
+      path: 'user',
+      select: 'name username'
+    }
+  })
+  .sort({ createdAt: -1 })
+  .limit(10); // Limit to most recent 10 notifications
 
     const formattedNotifications = notifications.map(notification => {
       let content = '';
