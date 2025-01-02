@@ -330,6 +330,21 @@ const Feed = () => {
   const verseRef = useRef(null);
   const api = React.useMemo(() => new ApiService(navigate), [navigate]);
 
+  useEffect(() => {
+    const styleSheet = document.createElement("style");
+    styleSheet.textContent = `
+      ${styles.fadeIn}
+      ${styles.scrollVerse}
+      ${styles.animations}
+      ${styles.scrollbar}
+    `;
+    document.head.appendChild(styleSheet);
+    return () => {
+      document.head.removeChild(styleSheet);
+    };
+  }, []);
+
+  
   const handleAuthorClick = (e, username) => {
     e.preventDefault();
     e.stopPropagation();
@@ -622,7 +637,8 @@ const Feed = () => {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
       {/* Fixed Sidebar */}
-      <div className="w-80 bg-white/80 backdrop-blur-lg p-6 shadow-2xl fixed h-full transform transition-all duration-300 hover:shadow-purple-200/50 border-r border-purple-100/50 overflow-y-auto">
+     {/* Fixed Sidebar */}
+     <div className="w-80 bg-white/80 backdrop-blur-lg p-6 shadow-2xl fixed h-full transform transition-all duration-300 hover:shadow-purple-200/50 border-r border-purple-100/50 overflow-y-auto">
         <div className="text-center mb-8 relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
           <div className="relative">
@@ -636,26 +652,14 @@ const Feed = () => {
               }}
             />
             <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
-              {user.name || 'Guest'}
+              {user?.name || 'Guest'}
             </h3>
-            <p className="text-purple-600">@{user.username || 'guest'}</p>
-          </div>
-      </div>
-  
-        <div className="mb-8 bg-white/90 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="overflow-hidden">
-            <p
-              ref={verseRef}
-              className="text-purple-700 italic text-sm animate-scroll"
-              onAnimationEnd={handleScrollEnd}
-            >
-              {bibleVerse || 'Loading verse...'}
-            </p>
+            <p className="text-purple-600">@{user?.username || 'guest'}</p>
           </div>
         </div>
 
-        {/* Enhanced Notifications Section */}
-            <div className="space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto scrollbar-thin scrollbar-thumb-purple-200 scrollbar-track-transparent">
+                {/* Notifications Section */}
+                <div className="space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto scrollbar-thin scrollbar-thumb-purple-200 scrollbar-track-transparent">
               <h4 className="font-semibold text-purple-800 flex items-center gap-2 mb-4">
                 <Bell className="w-5 h-5" />
                 Notifications
@@ -672,17 +676,35 @@ const Feed = () => {
             </div>
           </div>
 
+
           {/* Main Content Area */}
           <div className="flex-1 ml-80 p-6 space-y-6">
+              <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm shadow-md">
+              <div className="max-w-4xl mx-auto p-4">
+                <div className="bg-white/90 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <div className="overflow-hidden">
+                    <p
+                      ref={verseRef}
+                      className="text-purple-700 italic text-sm animate-scroll"
+                      onAnimationEnd={handleScrollEnd}
+                    >
+                      {bibleVerse || 'Loading verse...'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
             {/* Home Button */}
-            <button 
-              onClick={() => navigate('/')}
-              className="mb-6 bg-white/80 backdrop-blur-sm px-6 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 text-purple-600 font-medium transform hover:-translate-y-1"
-            >
-              Back Home
-            </button>
-  
-        <h2 className="feed-title">Church Feed</h2>
+            <div className="p-6 space-y-6">
+          {/* Home Button */}
+              <button 
+                onClick={() => navigate('/')}
+                className="mb-6 bg-white/80 backdrop-blur-sm px-6 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 text-purple-600 font-medium transform hover:-translate-y-1"
+              >
+                Back Home
+              </button>
+
+              <h2 className="text-2xl font-bold text-purple-800">Church Feed</h2>
   
         {/* Post Creation Form */}
         <div className="bg-white rounded-2xl shadow-xl p-6 transform transition-all duration-300 hover:shadow-2xl border border-purple-100/50">
@@ -830,7 +852,7 @@ const Feed = () => {
         )}
       </div>
 
-      {/* Responsive Menu Button - Only visible on mobile */}
+      {/* Mobile Menu Button */}
       <button
         className="fixed bottom-4 right-4 md:hidden bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
         onClick={() => document.querySelector('.sidebar').classList.toggle('translate-x-0')}
@@ -838,57 +860,62 @@ const Feed = () => {
         <Bell size={24} />
       </button>
     </div>
+  </div>
   );
 };
 
-// CSS animations to be added to your CSS file or styled-components
-const styles = `
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-@keyframes scrollVerse {
-  0% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
-}
+const styles = {
+  fadeIn: `
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  `,
+  scrollVerse: `
+    @keyframes scrollVerse {
+      0% {
+        transform: translateX(100%);
+      }
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+  `,
+  animations: `
+    .animate-fadeIn {
+      animation: fadeIn 0.2s ease-in-out;
+    }
 
-.animate-fadeIn {
-  animation: fadeIn 0.2s ease-in-out;
-}
+    .scrolling-verse {
+      animation: scrollVerse 15s linear;
+      white-space: nowrap;
+    }
+  `,
+  scrollbar: `
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
 
-.scrolling-verse {
-  animation: scrollVerse 15s linear;
-  white-space: nowrap;
-}
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
 
-/* Custom Scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(139, 92, 246, 0.3);
+      border-radius: 3px;
+    }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(139, 92, 246, 0.3);
-  border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(139, 92, 246, 0.5);
-}
-`;
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(139, 92, 246, 0.5);
+    }
+  `
+};
 
 export default Feed;
