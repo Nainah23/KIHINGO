@@ -20,7 +20,7 @@ const NotificationSchema = new mongoose.Schema({
   postModel: {
     type: String,
     required: true,
-    enum: ['Feed', 'Appointment']
+    enum: ['Feed', 'Appointment', 'Testimonial']
   },
   creator: {
     type: mongoose.Schema.Types.ObjectId,

@@ -636,7 +636,6 @@ const Feed = () => {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
-      {/* Fixed Sidebar */}
      {/* Fixed Sidebar */}
      <div className="w-80 bg-white/80 backdrop-blur-lg p-6 shadow-2xl fixed h-full transform transition-all duration-300 hover:shadow-purple-200/50 border-r border-purple-100/50 overflow-y-auto">
         <div className="text-center mb-8 relative group">

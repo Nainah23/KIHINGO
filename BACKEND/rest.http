@@ -2,7 +2,7 @@
 @baseUrl = http://localhost:8000/api
 @username = "e"
 @password = 1
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxOTI3YTEzMDdlNmI0YmVjODAzZTNiIiwicm9sZSI6InJldmVyZW5kIn0sImlhdCI6MTczMDM5ODA5OCwiZXhwIjoxNzMwNDAxNjk4fQ.d7NENM-mlUQD_yRhNxeicZxs63GsF8LmMwsdk-9WRVU
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxOTI3YTEzMDdlNmI0YmVjODAzZTNiIiwicm9sZSI6InJldmVyZW5kIn0sImlhdCI6MTczNjc1NTc4OSwiZXhwIjoxNzM2NzU5Mzg5fQ.TQdHYvrjWtcZ5VFLOtoIEv_Otv2zkyB0t7R1NekIHcw
 
 ### Auth Routes
 
@@ -86,7 +86,7 @@ x-auth-token: {{token}}
 GET {{baseUrl}}/testimonials
 
 ### Add Reaction to Testimonial
-POST {{baseUrl}}/testimonials/670413a9a38bd79075996141/react
+POST {{baseUrl}}/testimonials/6782a1f59aca0465cb28666d/react
 Content-Type: application/json
 x-auth-token: {{token}}
 
@@ -95,12 +95,12 @@ x-auth-token: {{token}}
 }
 
 ### Add Comment to Testimonial
-POST {{baseUrl}}/testimonials/672264b83b27b35c4ab498b6/comment
+POST {{baseUrl}}/testimonials/6782a1f59aca0465cb28666d/comment
 Content-Type: application/json
 x-auth-token: {{token}}
 
 {
-  "content": "This is a test"
+  "content": " Another test"
 }
 
 ### Appointment Routes

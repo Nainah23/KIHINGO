@@ -17,6 +17,7 @@ import Register from './pages/Register';
 // import Comments from './pages/Comments';
 import ChurchGroups from './pages/Groups';
 import SinglePost from './pages/SinglePost';
+import SingleTestimonial from './pages/SingleTestimonial';
 import Profile from './pages/Profile';
 
 
@@ -36,6 +37,7 @@ function App() {
           <Route path="/livestream" element={<Livestream />} />
           <Route path="/login" element={<Login />} />
           <Route path="feed/:id" element={<SinglePost />} />
+          <Route path="/testimonials:id" element={<SingleTestimonial />} />
           <Route path="profile/:username" element={<Profile />} />
           <Route path="/register" element={<Register />} />
           <Route path="/church_groups" element={<ChurchGroups />} />

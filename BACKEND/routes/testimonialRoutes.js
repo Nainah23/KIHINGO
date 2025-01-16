@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const Testimonial = require('../models/Testimonial');
+const Notification = require('../models/Notification');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Create a testimonial
@@ -40,29 +41,6 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ msg: 'Testimonial not found' });
     }
     res.json(testimonial);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Add a reaction to a testimonial
-router.post('/:id/react', authMiddleware, async (req, res) => {
-  try {
-    const testimonial = await Testimonial.findById(req.params.id);
-    if (!testimonial) {
-      return res.status(404).json({ msg: 'Testimonial not found' });
-    }
-
-    const newReaction = {
-      user: req.user.id,
-      type: req.body.type
-    };
-
-    testimonial.reactions.push(newReaction);
-    await testimonial.save();
-
-    res.json(testimonial.reactions);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -123,27 +101,77 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Add a reaction to a testimonial
+router.post('/:id/react', authMiddleware, async (req, res) => {
+  try {
+    const { type, action } = req.body;
+    const testimonial = await Testimonial.findById(req.params.id);
+
+    if (!testimonial) return res.status(404).json({ msg: 'Testimonial not found' });
+
+    const existingReactionIndex = testimonial.reactions.findIndex(r => r.user.toString() === req.user.id);
+
+    if (existingReactionIndex !== -1) {
+      // Update or remove reaction
+      if (testimonial.reactions[existingReactionIndex].type === type) {
+        testimonial.reactions.splice(existingReactionIndex, 1);
+      } else {
+        testimonial.reactions[existingReactionIndex].type = type;
+      }
+    } else {
+      // Add new reaction
+      testimonial.reactions.push({ user: req.user.id, type });
+
+      // Create notification for testimonial owner if it's a new reaction
+      if (action === 'add' && testimonial.user.toString() !== req.user.id) {
+        await Notification.create({
+          user: testimonial.user,
+          type: 'like',
+          post: testimonial._id,
+          postModel: 'Testimonial',
+          creator: req.user.id
+        });
+      }
+    }
+
+    await testimonial.save();
+    return res.json({ reactions: testimonial.reactions });
+  } catch (err) {
+    console.error(err.message);
+    return res.status(500).send('Server Error');
+  }
+});
+
 // Add a comment to a testimonial
 router.post('/:id/comment', authMiddleware, async (req, res) => {
   try {
+    const { content } = req.body;
     const testimonial = await Testimonial.findById(req.params.id);
-    if (!testimonial) {
-      return res.status(404).json({ msg: 'Testimonial not found' });
-    }
 
-    const newComment = {
-      user: req.user.id,
-      content: req.body.content
-    };
+    if (!testimonial) return res.status(404).json({ msg: 'Testimonial not found' });
 
-    testimonial.comments.push(newComment);
+    // Handle comment logic
+    const comment = { user: req.user.id, content };
+    testimonial.comments.push(comment);
     await testimonial.save();
 
-    res.json(testimonial.comments);
+    // Create notification for testimonial owner if the comment is not from them
+    if (testimonial.user.toString() !== req.user.id) {
+      await Notification.create({
+        user: testimonial.user,
+        type: 'comment',
+        post: testimonial._id,
+        postModel: 'Testimonial',
+        creator: req.user.id
+      });
+    }
+
+    return res.json(testimonial);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    return res.status(500).send('Server Error');
   }
 });
+
 
 module.exports = router;
