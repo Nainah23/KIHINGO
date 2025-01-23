@@ -33,6 +33,25 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/user/:username', async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    const testimonials = await Testimonial.find({ user: user._id })
+      .sort({ createdAt: -1 })
+      .populate('user', 'name username');
+
+    res.json(testimonials);
+  } catch (err) {
+    console.error(err.message);
+    console.log(err, 'error in testimonial fetch');
+    res.status(500).send('Server Error');
+  }
+});
+
 // Get a single testimonial
 router.get('/:id', async (req, res) => {
   try {

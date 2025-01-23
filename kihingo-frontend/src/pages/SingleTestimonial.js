@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { Edit, Trash, MoreVertical, Heart } from 'lucide-react';
 import data from '@emoji-mart/data';
@@ -347,9 +347,23 @@ const SingleTestimonial = () => {
               <h2 className="text-xl font-semibold mb-2">
                 {testimonial.title}
               </h2>
-              <p className="text-gray-600 text-sm">
-                Posted by {testimonial.user.username} {formatTimeElapsed(testimonial.createdAt)}
-              </p>
+              <div className="flex items-center space-x-2">
+                <Link to={`/profile/${testimonial.user.username}`}>
+                  <img
+                    src={testimonial.user.profileImage || '/default-profile.png'}
+                    alt={testimonial.user.username}
+                    className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                  />
+                </Link>
+                <div>
+                  <Link to={`/profile/${testimonial.user.username}`} className="text-blue-600 hover:text-blue-800">
+                    {testimonial.user.name}
+                  </Link>
+                  <p className="text-gray-600 text-sm">
+                    @{testimonial.user.username} · {formatTimeElapsed(testimonial.createdAt)}
+                  </p>
+                </div>
+              </div>
             </div>
             {user && user._id === testimonial.user._id && (
               <div className="flex items-center space-x-4">
@@ -430,13 +444,22 @@ const SingleTestimonial = () => {
           testimonial.comments.map((comment) => (
             <div key={comment._id} className="bg-white rounded-2xl shadow-xl p-6 mb-4 transform transition-all duration-300 ease-out hover:scale-[1.02]">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-800 font-semibold">
-                    {comment.user.username}
-                  </p>
-                  <p className="text-gray-600 text-sm">
-                    {formatTimeElapsed(comment.createdAt)}
-                  </p>
+                <div className="flex items-center space-x-2">
+                  <Link to={`/profile/${comment.user.username}`}>
+                    <img
+                      src={comment.user.profileImage || '/default-profile.png'}
+                      alt={comment.user.username}
+                      className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                    />
+                  </Link>
+                  <div>
+                    <Link to={`/profile/${comment.user.username}`} className="text-blue-600 hover:text-blue-800">
+                      {comment.user.name}
+                    </Link>
+                    <p className="text-gray-600 text-sm">
+                      @{comment.user.username} · {formatTimeElapsed(comment.createdAt)}
+                    </p>
+                  </div>
                 </div>
                 {user && user._id === comment.user._id && (
                   <div className="relative">
