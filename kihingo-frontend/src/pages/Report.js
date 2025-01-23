@@ -1,3 +1,4 @@
+// kihingo-frontend/src/pages/Report.js;
 import React, { useState, useEffect, useRef } from 'react';
 
 const ReportPage = () => {

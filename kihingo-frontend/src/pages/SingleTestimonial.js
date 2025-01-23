@@ -1,3 +1,4 @@
+// kihingo-frontend/src/pages/SingleTestimonial.js;
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -121,6 +122,7 @@ const SingleTestimonial = () => {
   const fetchTestimonial = async () => {
     try {
       const res = await axios.get(`http://localhost:8000/api/testimonials/${id}`);
+      console.log(res.data); // Log the response data
       const sortedComments = {
         ...res.data,
         comments: res.data.comments.sort((a, b) => 

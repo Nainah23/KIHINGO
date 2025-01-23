@@ -38,7 +38,7 @@ function App() {
           <Route path="/livestream" element={<Livestream />} />
           <Route path="/login" element={<Login />} />
           <Route path="feed/:id" element={<SinglePost />} />
-          <Route path="/testimonials:id" element={<SingleTestimonial />} />
+          <Route path="/testimonials/:id" element={<SingleTestimonial />} />
           <Route path="profile/:username" element={<Profile />} />
           <Route path="/register" element={<Register />} />
           <Route path="/report" element={<Report />} />

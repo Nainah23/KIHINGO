@@ -1,8 +1,8 @@
 ### Variables
 @baseUrl = http://localhost:8000/api
-@username = "e"
+@username = "c"
 @password = 1
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxOTI3YTEzMDdlNmI0YmVjODAzZTNiIiwicm9sZSI6InJldmVyZW5kIn0sImlhdCI6MTczNjc1NTc4OSwiZXhwIjoxNzM2NzU5Mzg5fQ.TQdHYvrjWtcZ5VFLOtoIEv_Otv2zkyB0t7R1NekIHcw
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxN2M3ZDFkNjNhNmRmYzhiYTQ0N2E2Iiwicm9sZSI6Im1lbWJlciJ9LCJpYXQiOjE3Mzc2NjgwNTAsImV4cCI6MTczNzY3MTY1MH0.hpv4xDwW8o9drrF877B1WmXTaSr7LfEAhbjFXOcNoTo
 
 ### Auth Routes
 
@@ -22,7 +22,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "username": "e",
+  "username": "c",
   "password": "{{password}}"
 }
 
@@ -74,7 +74,7 @@ x-auth-token: {{token}}
 }
 
 ### Update Testimonial
-PUT {{baseUrl}}/testimonials/672264b83b27b35c4ab498b6
+PUT {{baseUrl}}/testimonials/678242e5c96c6aa74a88f7f6
 Content-Type: application/json
 x-auth-token: {{token}}
 
@@ -85,8 +85,11 @@ x-auth-token: {{token}}
 ### Get All Testimonials
 GET {{baseUrl}}/testimonials
 
+### Get Single Testimonial
+GET {{baseUrl}}/testimonials/678242e5c96c6aa74a88f7f6
+
 ### Add Reaction to Testimonial
-POST {{baseUrl}}/testimonials/6782a1f59aca0465cb28666d/react
+POST {{baseUrl}}/testimonials/678242e5c96c6aa74a88f7f6/react
 Content-Type: application/json
 x-auth-token: {{token}}
 
@@ -95,12 +98,12 @@ x-auth-token: {{token}}
 }
 
 ### Add Comment to Testimonial
-POST {{baseUrl}}/testimonials/6782a1f59aca0465cb28666d/comment
+POST {{baseUrl}}/testimonials/678242e5c96c6aa74a88f7f6/comment
 Content-Type: application/json
 x-auth-token: {{token}}
 
 {
-  "content": " Another test"
+  "content": " Last test"
 }
 
 ### Appointment Routes

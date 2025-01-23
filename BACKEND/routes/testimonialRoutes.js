@@ -36,7 +36,10 @@ router.get('/', async (req, res) => {
 // Get a single testimonial
 router.get('/:id', async (req, res) => {
   try {
-    const testimonial = await Testimonial.findById(req.params.id).populate('user', 'name username').populate('comments.user', 'name username').exec();
+    const testimonial = await Testimonial.findById(req.params.id)
+      .populate('user', 'name username')
+      .populate('comments.user', 'name username')
+      .exec();
     if (!testimonial) {
       return res.status(404).json({ msg: 'Testimonial not found' });
     }
@@ -46,7 +49,6 @@ router.get('/:id', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
 
 // Update testimonial
 router.put('/:id', authMiddleware, async (req, res) => {
