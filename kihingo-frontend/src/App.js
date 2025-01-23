@@ -19,6 +19,7 @@ import ChurchGroups from './pages/Groups';
 import SinglePost from './pages/SinglePost';
 import SingleTestimonial from './pages/SingleTestimonial';
 import Profile from './pages/Profile';
+import Report from './pages/Report';
 
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
           <Route path="/testimonials:id" element={<SingleTestimonial />} />
           <Route path="profile/:username" element={<Profile />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/report" element={<Report />} />
           <Route path="/church_groups" element={<ChurchGroups />} />
         </Routes>
         </div>
