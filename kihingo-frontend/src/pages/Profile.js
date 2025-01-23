@@ -121,6 +121,10 @@ const Profile = () => {
               src={user.profileImage || '/default-profile.png'}
               alt={user.name}
               className="w-24 h-24 rounded-full border-4 border-blue-200"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/default-profile.png';
+              }}
             />
             <div>
               <h2 className="text-2xl font-bold text-blue-800">{user.name}</h2>

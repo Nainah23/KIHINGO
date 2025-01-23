@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { Edit, Trash, MoreVertical, Heart } from 'lucide-react';
 import data from '@emoji-mart/data';
@@ -347,9 +347,23 @@ const SingleTestimonial = () => {
               <h2 className="text-xl font-semibold mb-2">
                 {testimonial.title}
               </h2>
-              <p className="text-gray-600 text-sm">
-                Posted by {testimonial.user.username} {formatTimeElapsed(testimonial.createdAt)}
-              </p>
+              <div className="flex items-center space-x-2">
+                <Link to={`/profile/${testimonial.user.username}`}>
+                  <img
+                    src={testimonial.user.profileImage || '/default-profile.png'}
+                    alt={testimonial.user.username}
+                    className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                  />
+                </Link>
+                <div>
+                  <Link to={`/profile/${testimonial.user.username}`} className="text-blue-600 hover:text-blue-800">
+                    {testimonial.user.name}
+                  </Link>
+                  <p className="text-gray-600 text-sm">
+                    @{testimonial.user.username} · {formatTimeElapsed(testimonial.createdAt)}
+                  </p>
+                </div>
+              </div>
             </div>
             {user && user._id === testimonial.user._id && (
               <div className="flex items-center space-x-4">
@@ -430,13 +444,22 @@ const SingleTestimonial = () => {
           testimonial.comments.map((comment) => (
             <div key={comment._id} className="bg-white rounded-2xl shadow-xl p-6 mb-4 transform transition-all duration-300 ease-out hover:scale-[1.02]">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-800 font-semibold">
-                    {comment.user.username}
-                  </p>
-                  <p className="text-gray-600 text-sm">
-                    {formatTimeElapsed(comment.createdAt)}
-                  </p>
+                <div className="flex items-center space-x-2">
+                  <Link to={`/profile/${comment.user.username}`}>
+                    <img
+                      src={comment.user.profileImage || '/default-profile.png'}
+                      alt={comment.user.username}
+                      className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                    />
+                  </Link>
+                  <div>
+                    <Link to={`/profile/${comment.user.username}`} className="text-blue-600 hover:text-blue-800">
+                      {comment.user.name}
+                    </Link>
+                    <p className="text-gray-600 text-sm">
+                      @{comment.user.username} · {formatTimeElapsed(comment.createdAt)}
+                    </p>
+                  </div>
                 </div>
                 {user && user._id === comment.user._id && (
                   <div className="relative">
@@ -516,6 +539,181 @@ const SingleTestimonial = () => {
 
 export default SingleTestimonial;
 
+
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../contexts/AuthContext';
+import { MoreVertical } from 'lucide-react';
+
+const Profile = () => {
+  const { username } = useParams();
+  const navigate = useNavigate();
+  const { user: currentUser } = useContext(AuthContext);
+  const [user, setUser] = useState(null);
+  const [userPosts, setUserPosts] = useState([]);
+  const [userTestimonials, setUserTestimonials] = useState([]);
+  const [bibleVerse, setBibleVerse] = useState('');
+  const verseRef = useRef(null);
+  const scrollCount = useRef(0);
+
+  useEffect(() => {
+    fetchUserProfile();
+    fetchUserPosts();
+    fetchUserTestimonials();
+    fetchBibleVerse();
+  }, [username]);
+
+  const fetchBibleVerse = async () => {
+    try {
+      const res = await fetch('http://localhost:8000/api/bible-verse');
+      if (!res.ok) throw new Error('Failed to fetch Bible verse');
+      const data = await res.json();
+      setBibleVerse(data.verse);
+    } catch (error) {
+      console.error('Error fetching Bible verse:', error);
+    }
+  };
+
+  const startScrollAnimation = () => {
+    if (verseRef.current) {
+      verseRef.current.style.animation = 'none';
+      void verseRef.current.offsetHeight; // Trigger reflow
+      verseRef.current.style.animation = 'scrollVerse 15s linear';
+    }
+  };
+
+  const handleScrollEnd = () => {
+    scrollCount.current += 1;
+    if (scrollCount.current < 2) {
+      startScrollAnimation();
+    } else {
+      scrollCount.current = 0;
+      fetchBibleVerse(); // Fetch a new verse after two scroll cycles
+    }
+  };
+
+  useEffect(() => {
+    if (bibleVerse) {
+      startScrollAnimation();
+    }
+  }, [bibleVerse]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const res = await axios.get(`http://localhost:8000/api/auth/profile/${username}`);
+      setUser(res.data);
+    } catch (err) {
+      console.error(err);
+      navigate('/feed');
+    }
+  };
+
+  const fetchUserPosts = async () => {
+    try {
+      const res = await axios.get(`http://localhost:8000/api/feed/user/${username}`);
+      setUserPosts(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchUserTestimonials = async () => {
+    try {
+      const res = await axios.get(`http://localhost:8000/api/testimonials/user/${username}`);
+      setUserTestimonials(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handlePostClick = (postId) => {
+    navigate(`/feed/${postId}`);
+  };
+
+  const handleTestimonialClick = (testimonialId) => {
+    navigate(`/testimonials/${testimonialId}`);
+  };
+
+  if (!user) return <div>Loading...</div>;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8 px-4">
+      {/* Scrolling Bible Verse */}
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm shadow-md mb-8">
+        <div className="max-w-4xl mx-auto p-4">
+          <div className="bg-white/90 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="overflow-hidden">
+              <p
+                ref={verseRef}
+                className="text-blue-700 italic text-sm animate-scroll"
+                onAnimationEnd={handleScrollEnd}
+              >
+                {bibleVerse || 'Loading verse...'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+          <div className="flex items-center space-x-4">
+            <img
+              src={user.profileImage || '/default-profile.png'}
+              alt={user.name}
+              className="w-24 h-24 rounded-full border-4 border-blue-200"
+            />
+            <div>
+              <h2 className="text-2xl font-bold text-blue-800">{user.name}</h2>
+              <p className="text-gray-600">@{user.username}</p>
+              <p className="text-gray-600">{user.email}</p>
+              <p className="text-gray-600 capitalize">{user.role}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-xl font-bold text-blue-800 mb-4">Posts</h3>
+            {userPosts.map(post => (
+              <div
+                key={post._id}
+                className="bg-white rounded-2xl shadow-xl p-6 mb-4 transform transition-all duration-300 ease-out hover:scale-[1.02] cursor-pointer"
+                onClick={() => handlePostClick(post._id)}
+              >
+                <p className="text-gray-800">{post.content}</p>
+                <div className="flex items-center mt-4 space-x-4">
+                  <span className="text-gray-600">👍 {post.reactions.length}</span>
+                  <span className="text-gray-600">💬 {post.comments.length}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <h3 className="text-xl font-bold text-blue-800 mb-4">Testimonials</h3>
+            {userTestimonials.map(testimonial => (
+              <div
+                key={testimonial._id}
+                className="bg-white rounded-2xl shadow-xl p-6 mb-4 transform transition-all duration-300 ease-out hover:scale-[1.02] cursor-pointer"
+                onClick={() => handleTestimonialClick(testimonial._id)}
+              >
+                <p className="text-gray-800">{testimonial.content}</p>
+                <div className="flex items-center mt-4 space-x-4">
+                  <span className="text-gray-600">👍 {testimonial.reactions.length}</span>
+                  <span className="text-gray-600">💬 {testimonial.comments.length}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;
 
 
 // kihingo-frontend/src/pages/Testimonials.js;
@@ -1294,270 +1492,3 @@ const Testimonials = () => {
 };
 
 export default Testimonials;
-
-
-// src/pages/Profile.js;
-import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext';
-import { MoreVertical } from 'lucide-react';
-
-const Profile = () => {
-  const { username } = useParams();
-  const navigate = useNavigate();
-  const { user: currentUser } = useContext(AuthContext);
-  const [user, setUser] = useState(null);
-  const [userPosts, setUserPosts] = useState([]);
-  const [activeDropdown, setActiveDropdown] = useState(null);
-
-  useEffect(() => {
-    fetchUserProfile();
-    fetchUserPosts();
-  }, [username]);
-
-
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return '/default-profile.png';
-    const cleanPath = imagePath.replace(/^uploads\//, '');
-    return `http://localhost:8000/uploads/${cleanPath}`;
-  };
-
-  const fetchUserProfile = async () => {
-    try {
-      const res = await axios.get(`http://localhost:8000/api/auth/profile/${username}`);
-      setUser(res.data);
-    } catch (err) {
-      console.error(err);
-      navigate('/feed');
-    }
-  };
-
-  const fetchUserPosts = async () => {
-    try {
-      const res = await axios.get(`http://localhost:8000/api/feed/user/${username}`);
-      setUserPosts(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handlePostClick = (postId) => {
-    navigate(`/feed/${postId}`);
-  };
-
-  const toggleDropdown = (postId) => {
-    setActiveDropdown(activeDropdown === postId ? null : postId);
-  };
-
-  const handleDelete = async (postId) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:8000/api/feed/${postId}`, {
-        headers: { 'x-auth-token': token }
-      });
-      setUserPosts(prevPosts => prevPosts.filter(post => post._id !== postId));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  if (!user) return <div>Loading...</div>;
-
-  return (
-    <div className="profile-container" style={styles.container}>
-      <div className="profile-header" style={styles.header}>
-        <img 
-          src={getImageUrl(user.profileImage)}
-            alt="User Profile"
-            style={styles.profileImage}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = '/default-profile.png';
-            }}
-        />
-        <h2 style={styles.name}>{user.name}</h2>
-        <p style={styles.username}>@{user.username}</p>
-        <p style={styles.email}>{user.email}</p>
-        <p style={styles.role}>{user.role}</p>
-        {user.contact && <p style={styles.contact}>{user.contact}</p>}
-      </div>
-
-      <div className="posts-section" style={styles.postsSection}>
-        <h3 style={styles.sectionTitle}>Posts</h3>
-        {userPosts.map(post => (
-          <div key={post._id} style={styles.post}>
-            <div style={styles.postHeader}>
-              <span style={styles.postDate}>
-                {new Date(post.createdAt).toLocaleDateString()}
-              </span>
-              {currentUser && (currentUser._id === user._id || currentUser.role === 'admin') && (
-                <div style={styles.postActions}>
-                  <button onClick={() => toggleDropdown(post._id)} style={styles.actionButton}>
-                    <MoreVertical size={20} />
-                  </button>
-                  {activeDropdown === post._id && (
-                    <div style={styles.dropdown}>
-                      <button 
-                        onClick={() => navigate(`/feed/${post._id}/edit`)}
-                        style={styles.dropdownButton}
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(post._id)}
-                        style={styles.dropdownButton}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div 
-              onClick={() => handlePostClick(post._id)}
-              style={styles.postContent}
-            >
-              <p>{post.content}</p>
-              {post.attachments && post.attachments.length > 0 && (
-                <div style={styles.attachments}>
-                  {post.attachments.map((attachment, index) => (
-                    <img 
-                      key={index} 
-                      src={attachment} 
-                      alt="Attachment"
-                      style={styles.attachmentImage}
-                    />
-                  ))}
-                </div>
-              )}
-              <div style={styles.postStats}>
-                <span>👍 {post.reactions.length}</span>
-                <span>💬 {post.comments.length}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const styles = {
-  container: {
-    maxWidth: '800px',
-    margin: '0 auto',
-    padding: '20px',
-  },
-  header: {
-    textAlign: 'center',
-    marginBottom: '40px',
-    padding: '20px',
-    backgroundColor: '#fff',
-    borderRadius: '10px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  },
-  profileImage: {
-    width: '150px',
-    height: '150px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    marginBottom: '20px',
-    border: '3px solid #cbbad4',
-  },
-  name: {
-    color: '#a1626a',
-    marginBottom: '5px',
-  },
-  username: {
-    color: '#666',
-    marginBottom: '10px',
-  },
-  email: {
-    color: '#666',
-    marginBottom: '5px',
-  },
-  role: {
-    color: '#a1626a',
-    textTransform: 'capitalize',
-    marginBottom: '5px',
-  },
-  contact: {
-    color: '#666',
-  },
-  postsSection: {
-    marginTop: '20px',
-  },
-  sectionTitle: {
-    color: '#a1626a',
-    marginBottom: '20px',
-  },
-  post: {
-    backgroundColor: '#fff',
-    borderRadius: '10px',
-    padding: '20px',
-    marginBottom: '20px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  },
-  postHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '10px',
-  },
-  postDate: {
-    color: '#666',
-    fontSize: '0.9em',
-  },
-  postActions: {
-    position: 'relative',
-  },
-  actionButton: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '5px',
-  },
-  dropdown: {
-    position: 'absolute',
-    right: 0,
-    top: '100%',
-    backgroundColor: '#fff',
-    borderRadius: '5px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    zIndex: 1000,
-  },
-  dropdownButton: {
-    display: 'block',
-    width: '100%',
-    padding: '10px 20px',
-    border: 'none',
-    background: 'none',
-    cursor: 'pointer',
-    textAlign: 'left',
-    color: '#333',
-    ':hover': {
-      backgroundColor: '#f5f5f5',
-    },
-  },
-  postContent: {
-    cursor: 'pointer',
-  },
-  attachments: {
-    marginTop: '10px',
-  },
-  attachmentImage: {
-    maxWidth: '100%',
-    borderRadius: '5px',
-    marginBottom: '10px',
-  },
-  postStats: {
-    display: 'flex',
-    gap: '15px',
-    marginTop: '10px',
-    color: '#666',
-  },
-};
-
-export default Profile;

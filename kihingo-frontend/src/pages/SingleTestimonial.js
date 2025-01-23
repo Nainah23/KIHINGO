@@ -353,6 +353,10 @@ const SingleTestimonial = () => {
                     src={testimonial.user.profileImage || '/default-profile.png'}
                     alt={testimonial.user.username}
                     className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/default-profile.png';
+                    }}
                   />
                 </Link>
                 <div>
@@ -450,6 +454,10 @@ const SingleTestimonial = () => {
                       src={comment.user.profileImage || '/default-profile.png'}
                       alt={comment.user.username}
                       className="w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/default-profile.png';
+                      }}
                     />
                   </Link>
                   <div>
