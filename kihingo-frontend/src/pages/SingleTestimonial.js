@@ -1,9 +1,8 @@
-// kihingo-frontend/src/pages/SingleTestimonial.js;
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
-import { Edit, Trash, MoreVertical } from 'lucide-react';
+import { Edit, Trash, MoreVertical, Heart } from 'lucide-react';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 
@@ -11,16 +10,16 @@ const formatTimeElapsed = (date) => {
   const now = new Date();
   const posted = new Date(date);
   const diffInMinutes = Math.floor((now - posted) / (1000 * 60));
-  
+
   if (diffInMinutes < 1) return 'just now';
   if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
-  
+
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) return `${diffInHours} hours ago`;
-  
+
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) return `${diffInDays} days ago`;
-  
+
   return posted.toLocaleDateString();
 };
 
@@ -56,7 +55,7 @@ const EditTestimonialModal = ({ testimonial, onClose, onUpdate }) => {
             className="w-full p-4 border rounded-lg mb-4 min-h-[150px] resize-y focus:ring-2 focus:ring-blue-500 transition-all duration-300"
           />
           <div className="flex justify-between items-center">
-            <button 
+            <button
               type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               className="text-2xl hover:scale-110 transition-transform duration-200"
@@ -67,7 +66,7 @@ const EditTestimonialModal = ({ testimonial, onClose, onUpdate }) => {
               <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200">
                 Update
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={onClose}
                 className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transform hover:scale-105 transition-all duration-200"
@@ -101,16 +100,20 @@ const SingleTestimonial = () => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editedComment, setEditedComment] = useState('');
   const [isEditingTestimonial, setIsEditingTestimonial] = useState(false);
+  const [bibleVerse, setBibleVerse] = useState('');
+  const verseRef = useRef(null);
+  const scrollCount = useRef(0);
   const emojiPickerRef = useRef(null);
 
   useEffect(() => {
     fetchTestimonial();
+    fetchBibleVerse();
   }, [id]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target) &&
-          !event.target.classList.contains('emoji-button')) {
+        !event.target.classList.contains('emoji-button')) {
         setShowEmojiPicker(false);
       }
     };
@@ -122,10 +125,9 @@ const SingleTestimonial = () => {
   const fetchTestimonial = async () => {
     try {
       const res = await axios.get(`http://localhost:8000/api/testimonials/${id}`);
-      console.log(res.data); // Log the response data
       const sortedComments = {
         ...res.data,
-        comments: res.data.comments.sort((a, b) => 
+        comments: res.data.comments.sort((a, b) =>
           new Date(b.createdAt) - new Date(a.createdAt)
         )
       };
@@ -138,6 +140,41 @@ const SingleTestimonial = () => {
       }
     }
   };
+
+  const fetchBibleVerse = async () => {
+    try {
+      const res = await fetch('http://localhost:8000/api/bible-verse');
+      if (!res.ok) throw new Error('Failed to fetch Bible verse');
+      const data = await res.json();
+      setBibleVerse(data.verse);
+    } catch (error) {
+      console.error('Error fetching Bible verse:', error);
+    }
+  };
+
+  const startScrollAnimation = () => {
+    if (verseRef.current) {
+      verseRef.current.style.animation = 'none';
+      void verseRef.current.offsetHeight; // Trigger reflow
+      verseRef.current.style.animation = 'scrollVerse 15s linear';
+    }
+  };
+
+  const handleScrollEnd = () => {
+    scrollCount.current += 1;
+    if (scrollCount.current < 2) {
+      startScrollAnimation();
+    } else {
+      scrollCount.current = 0;
+      fetchBibleVerse(); // Fetch a new verse after two scroll cycles
+    }
+  };
+
+  useEffect(() => {
+    if (bibleVerse) {
+      startScrollAnimation();
+    }
+  }, [bibleVerse]);
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
@@ -171,15 +208,39 @@ const SingleTestimonial = () => {
     }
   };
 
+  const handleReaction = async () => {
+    if (!user) {
+      alert('Please login to react.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const existingReaction = testimonial.reactions.find(r => r.user === user._id);
+
+      const res = await axios.post(
+        `http://localhost:8000/api/testimonials/${id}/react`,
+        {
+          type: '👍',
+          action: existingReaction ? 'remove' : 'add'
+        },
+        { headers: { 'x-auth-token': token } }
+      );
+
+      setTestimonial(prevTestimonial => ({
+        ...prevTestimonial,
+        reactions: res.data.reactions
+      }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleDelete = async (testimonialId) => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`http://localhost:8000/api/testimonials/${testimonialId}`, {
         headers: { 'x-auth-token': token }
-      }).catch(err => {
-        console.error(err);
-      }).catch(err => {
-        console.error(err);
       });
       navigate('/testimonials');
     } catch (err) {
@@ -220,8 +281,7 @@ const SingleTestimonial = () => {
     } catch (err) {
       console.error(err);
     }
-};
-
+  };
 
   const handleCommentEdit = async (commentId, newContent) => {
     try {
@@ -256,8 +316,25 @@ const SingleTestimonial = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8 px-4">
+      {/* Scrolling Bible Verse */}
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm shadow-md mb-8">
+        <div className="max-w-4xl mx-auto p-4">
+          <div className="bg-white/90 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="overflow-hidden">
+              <p
+                ref={verseRef}
+                className="text-blue-700 italic text-sm animate-scroll"
+                onAnimationEnd={handleScrollEnd}
+              >
+                {bibleVerse || 'Loading verse...'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-3xl mx-auto">
-        <button 
+        <button
           onClick={() => navigate('/testimonials')}
           className="mb-8 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
         >
@@ -276,13 +353,13 @@ const SingleTestimonial = () => {
             </div>
             {user && user._id === testimonial.user._id && (
               <div className="flex items-center space-x-4">
-                <button 
+                <button
                   onClick={() => setIsEditingTestimonial(true)}
                   className="text-blue-600 hover:text-blue-800 transition-all duration-200"
                 >
                   <Edit />
                 </button>
-                <button 
+                <button
                   onClick={() => handleDelete(testimonial._id)}
                   className="text-red-600 hover:text-red-800 transition-all duration-200"
                 >
@@ -294,6 +371,19 @@ const SingleTestimonial = () => {
           <p className="text-gray-800 mt-4">
             {testimonial.content}
           </p>
+
+          {/* Reaction Button */}
+          <div className="flex items-center mt-4">
+            <button
+              onClick={handleReaction}
+              className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              <Heart className="w-5 h-5" />
+              <span className="font-medium">
+                {testimonial.reactions?.length || 0}
+              </span>
+            </button>
+          </div>
         </div>
 
         {isEditingTestimonial && (
@@ -312,14 +402,14 @@ const SingleTestimonial = () => {
             className="w-full p-4 border rounded-lg mb-4 min-h-[100px] resize-y focus:ring-2 focus:ring-blue-500 transition-all duration-300"
           />
           <div className="flex justify-between items-center">
-            <button 
+            <button
               type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               className="text-2xl hover:scale-110 transition-transform duration-200 emoji-button"
             >
               😊
             </button>
-            <button 
+            <button
               type="submit"
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
@@ -390,7 +480,7 @@ const SingleTestimonial = () => {
                     className="w-full p-4 border rounded-lg mt-4 min-h-[100px] resize-y focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                   />
                   <div className="flex justify-end mt-4">
-                    <button 
+                    <button
                       onClick={() => {
                         handleCommentEdit(comment._id, editedComment);
                         setEditingCommentId(null);
@@ -399,7 +489,7 @@ const SingleTestimonial = () => {
                     >
                       Save
                     </button>
-                    <button 
+                    <button
                       onClick={() => setEditingCommentId(null)}
                       className="bg-gray-200 text-gray-700 px-6 py-3 ml-4 rounded-lg hover:bg-gray-300 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                     >
