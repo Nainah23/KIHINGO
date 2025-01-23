@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const Testimonial = require('../models/Testimonial');
 const Notification = require('../models/Notification');
+const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Create a testimonial
